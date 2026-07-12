@@ -2007,7 +2007,8 @@ class Sales extends Component
         $existingItem = $this->cart->first(function ($item) use ($product, $targetWarehouseId) {
             return $item['pid'] === $product->id && 
                    ($item['warehouse_id'] ?? null) == $targetWarehouseId &&
-                   !isset($item['product_item_id']); // Only merge if it's NOT a specific item
+                   !isset($item['product_item_id']) &&
+                   !$product->is_variable_price; // Do not merge variable price products
         });
 
         if ($existingItem) {
