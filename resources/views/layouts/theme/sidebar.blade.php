@@ -581,6 +581,12 @@
                                       </a>
                                   </li>
                                   <li class="nav-item">
+                                      <a href="{{ route('reports.seller.grouped') }}" class="nav-link {{ Request::is('reports/seller-grouped*') ? 'active' : '' }}">
+                                          <i class="far fa-dot-circle nav-icon text-primary"></i>
+                                          <p>Ventas por Vendedor</p>
+                                      </a>
+                                  </li>
+                                  <li class="nav-item">
                                       <a href="{{ route('reports.payment.relationship') }}" class="nav-link">
                                           <i class="far fa-dot-circle nav-icon"></i>
                                           <p>Relación de Cobros</p>
