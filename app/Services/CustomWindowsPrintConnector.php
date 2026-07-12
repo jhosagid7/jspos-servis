@@ -138,6 +138,24 @@ class CustomWindowsPrintConnector implements PrintConnector
     protected function finalizeWin($data)
     {
         if (!$this->isLocal) {
+            // Check if hostname is online using socket with 1.0 second timeout to prevent hanging the HTTP thread
+            $hostOnline = false;
+            $fp = @fsockopen($this->hostname, 445, $errno, $errstr, 1.0);
+            if ($fp) {
+                $hostOnline = true;
+                fclose($fp);
+            } else {
+                $fp = @fsockopen($this->hostname, 139, $errno, $errstr, 1.0);
+                if ($fp) {
+                    $hostOnline = true;
+                    fclose($fp);
+                }
+            }
+
+            if (!$hostOnline) {
+                throw new Exception("Samba host {$this->hostname} is offline/unreachable.");
+            }
+
             $device = "\\\\" . $this->hostname . "\\" . $this->printerName;
             if ($this->userName !== null) {
                 $user = "/user:" . ($this->workgroup != null ? ($this->workgroup . "\\") : "") . $this->userName;
@@ -169,6 +187,30 @@ class CustomWindowsPrintConnector implements PrintConnector
             }
             unlink($filename);
         } else {
+            if (strpos($this->printerName, '\\\\') === 0) {
+                // Check if UNC path hostname is online
+                $clean = ltrim($this->printerName, '\\');
+                $parts = explode('\\', $clean);
+                if (count($parts) >= 2) {
+                    $host = $parts[0];
+                    $hostOnline = false;
+                    $fp = @fsockopen($host, 445, $errno, $errstr, 1.0);
+                    if ($fp) {
+                        $hostOnline = true;
+                        fclose($fp);
+                    } else {
+                        $fp = @fsockopen($host, 139, $errno, $errstr, 1.0);
+                        if ($fp) {
+                            $hostOnline = true;
+                            fclose($fp);
+                        }
+                    }
+                    if (!$hostOnline) {
+                        throw new Exception("UNC host {$host} is offline/unreachable.");
+                    }
+                }
+            }
+
             if (file_put_contents($this->printerName, $data) === false) {
                 throw new Exception("Failed to write file to printer at " . $this->printerName);
             }

@@ -44,6 +44,9 @@ class SystemNotificationListener implements ShouldQueue
             $customer = Customer::find($sale->customer_id);
             if (!$customer) return;
 
+            // Bypassear si es Consumidor Final
+            if (strtolower(trim($customer->name)) === 'consumidor final') return;
+
             // 1. WHATSAPP
             $this->processWhatsappSale($sale, $customer);
 
@@ -58,7 +61,10 @@ class SystemNotificationListener implements ShouldQueue
     protected function processWhatsappSale(Sale $sale, Customer $customer)
     {
         $template = WhatsappTemplate::where('event_type', 'sale_created')->first();
-        if (!$template) return;
+        if (!$template || !$template->is_active) return;
+
+        $shouldAutoSend = ($customer->whatsapp_notify_sales !== false);
+        if (!$shouldAutoSend) return;
 
         $phone = $this->resolvePhoneNumber($customer);
         if (!$phone) return;
@@ -78,13 +84,10 @@ class SystemNotificationListener implements ShouldQueue
             'status' => 'pending'
         ]);
 
-        // Dispatch Mode Logic: Priority to Global setting if Customer explicitly allows or hasn't disabled
         $globalMode = $template->dispatch_mode ?? 'auto';
         $customerMode = $customer->wa_dispatch_mode ?? 'auto';
-        
-        $shouldAutoSend = $template->is_active && ($customer->whatsapp_notify_sales !== false);
 
-        if ($shouldAutoSend && $globalMode === 'auto' && $customerMode === 'auto') {
+        if ($globalMode === 'auto' && $customerMode === 'auto') {
             \App\Jobs\SendWhatsappMessage::dispatch($msg->id);
         }
     }
@@ -92,7 +95,10 @@ class SystemNotificationListener implements ShouldQueue
     protected function processEmailSale(Sale $sale, Customer $customer)
     {
         $template = EmailTemplate::where('event_type', 'sale_created')->first();
-        if (!$template) return;
+        if (!$template || !$template->is_active) return;
+
+        $shouldAutoSend = ($customer->email_notify_sales !== false);
+        if (!$shouldAutoSend) return;
 
         $email = $this->resolveEmail($customer);
         if (!$email) return;
@@ -116,9 +122,8 @@ class SystemNotificationListener implements ShouldQueue
 
         $globalMode = $template->dispatch_mode ?? 'auto';
         $customerMode = $customer->email_dispatch_mode ?? 'auto';
-        $shouldAutoSend = $template->is_active && ($customer->email_notify_sales !== false);
 
-        if ($shouldAutoSend && $globalMode === 'auto' && $customerMode === 'auto') {
+        if ($globalMode === 'auto' && $customerMode === 'auto') {
             \App\Jobs\SendEmailNotification::dispatch($msg->id);
         }
     }
@@ -130,6 +135,9 @@ class SystemNotificationListener implements ShouldQueue
             // Reload customer to ensure we have fresh data for notification flags
             $customer = Customer::find($sale->customer_id);
             if (!$customer) return;
+
+            // Bypassear si es Consumidor Final
+            if (strtolower(trim($customer->name)) === 'consumidor final') return;
 
             // 1. WHATSAPP
             $this->processWhatsappPayment($payment, $amountPaid, $sale, $customer);
@@ -145,7 +153,10 @@ class SystemNotificationListener implements ShouldQueue
     protected function processWhatsappPayment($payment, $amountPaid, Sale $sale, Customer $customer)
     {
         $template = WhatsappTemplate::where('event_type', 'payment_received')->first();
-        if (!$template) return;
+        if (!$template || !$template->is_active) return;
+
+        $shouldAutoSend = ($customer->whatsapp_notify_payments !== false);
+        if (!$shouldAutoSend) return;
 
         $phone = $this->resolvePhoneNumber($customer);
         if (!$phone) return;
@@ -170,9 +181,7 @@ class SystemNotificationListener implements ShouldQueue
         $globalMode = $template->dispatch_mode ?? 'auto';
         $customerMode = $customer->wa_dispatch_mode ?? 'auto';
 
-        $shouldAutoSend = $template->is_active && ($customer->whatsapp_notify_payments != false);
-
-        if ($shouldAutoSend && $globalMode === 'auto' && $customerMode === 'auto') {
+        if ($globalMode === 'auto' && $customerMode === 'auto') {
             \App\Jobs\SendWhatsappMessage::dispatch($msg->id);
         }
     }
@@ -180,7 +189,10 @@ class SystemNotificationListener implements ShouldQueue
     protected function processEmailPayment($payment, $amountPaid, Sale $sale, Customer $customer)
     {
         $template = EmailTemplate::where('event_type', 'payment_received')->first();
-        if (!$template) return;
+        if (!$template || !$template->is_active) return;
+
+        $shouldAutoSend = ($customer->email_notify_payments !== false);
+        if (!$shouldAutoSend) return;
 
         $email = $this->resolveEmail($customer);
         if (!$email) return;
@@ -207,10 +219,8 @@ class SystemNotificationListener implements ShouldQueue
 
         $globalMode = $template->dispatch_mode ?? 'auto';
         $customerMode = $customer->email_dispatch_mode ?? 'auto';
-        // Treat NULL or empty as TRUE (default behavior for existing customers)
-        $shouldAutoSend = $template->is_active && ($customer->email_notify_payments !== false);
 
-        if ($shouldAutoSend && $globalMode === 'auto' && $customerMode === 'auto') {
+        if ($globalMode === 'auto' && $customerMode === 'auto') {
             \App\Jobs\SendEmailNotification::dispatch($msg->id);
         }
     }
