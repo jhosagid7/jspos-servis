@@ -68,12 +68,10 @@ class SellerGroupedReport extends Component
         return $query->select([
                 'customers.seller_id',
                 DB::raw("COALESCE(users.name, 'OFICINA / SIN VENDEDOR') as seller_name"),
-                DB::raw("SUM(CASE WHEN departments.report_type = 'local' THEN sale_details.quantity * sale_details.sale_price ELSE 0 END) as local_bs"),
-                DB::raw("SUM(CASE WHEN departments.report_type = 'local' THEN sale_details.quantity * (sale_details.sale_price / COALESCE(NULLIF(sales.primary_exchange_rate, 0), 1)) ELSE 0 END) as local_usd"),
-                DB::raw("SUM(CASE WHEN departments.report_type = 'gravado' THEN sale_details.quantity * sale_details.sale_price ELSE 0 END) as gravado_bs"),
-                DB::raw("SUM(CASE WHEN departments.report_type = 'gravado' THEN sale_details.quantity * (sale_details.sale_price / COALESCE(NULLIF(sales.primary_exchange_rate, 0), 1)) ELSE 0 END) as gravado_usd"),
-                DB::raw("SUM(sale_details.quantity * sale_details.sale_price) as total_bs"),
-                DB::raw("SUM(sale_details.quantity * (sale_details.sale_price / COALESCE(NULLIF(sales.primary_exchange_rate, 0), 1))) as total_usd")
+                DB::raw("SUM(CASE WHEN departments.report_type = 'local' THEN sale_details.quantity * sale_details.sale_price ELSE 0 END) as local_usd"),
+                DB::raw("SUM(CASE WHEN departments.report_type = 'gravado' THEN sale_details.quantity * sale_details.sale_price ELSE 0 END) as gravado_usd"),
+                DB::raw("SUM(sale_details.quantity * sale_details.sale_price) as total_usd"),
+                DB::raw("COUNT(DISTINCT sale_details.sale_id) as sale_count")
             ])
             ->groupBy(['customers.seller_id', 'users.name'])
             ->orderBy('users.name')
@@ -84,11 +82,8 @@ class SellerGroupedReport extends Component
     {
         $reportData = $this->getReportData();
         $totals = [
-            'local_bs'    => $reportData->sum('local_bs'),
             'local_usd'   => $reportData->sum('local_usd'),
-            'gravado_bs'  => $reportData->sum('gravado_bs'),
             'gravado_usd' => $reportData->sum('gravado_usd'),
-            'total_bs'    => $reportData->sum('total_bs'),
             'total_usd'   => $reportData->sum('total_usd'),
         ];
 
@@ -136,11 +131,8 @@ class SellerGroupedReport extends Component
         $reportData  = $this->getReportData();
 
         $totals = [
-            'local_bs'    => $reportData->sum('local_bs'),
             'local_usd'   => $reportData->sum('local_usd'),
-            'gravado_bs'  => $reportData->sum('gravado_bs'),
             'gravado_usd' => $reportData->sum('gravado_usd'),
-            'total_bs'    => $reportData->sum('total_bs'),
             'total_usd'   => $reportData->sum('total_usd'),
         ];
 

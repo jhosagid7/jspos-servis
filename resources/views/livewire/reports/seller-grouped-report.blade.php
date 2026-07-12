@@ -58,6 +58,13 @@
                         </button>
                     </div>
                     @endif
+
+                    <!-- Leyenda -->
+                    <div class="mt-3 p-2 rounded" style="background:#f8f9fa; border-left: 3px solid #6c757d;">
+                        <p class="f-11 text-muted mb-1"><b>¿Qué es LOCAL / GRAVADO?</b></p>
+                        <p class="f-11 text-muted mb-0">Es la <b>clasificación del departamento</b> al que pertenece el producto, no el tipo de pago ni si cobró IVA.</p>
+                        <p class="f-11 text-muted mb-0 mt-1">Se configura en <b>Registros Maestros → Categorías</b>.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -66,7 +73,7 @@
         <div class="col-sm-12 col-md-9">
             <div class="card card-absolute">
                 <div class="card-header bg-dark d-flex justify-content-between align-items-center">
-                    <h5 class="txt-light mb-0">Ventas por Vendedor — Desglose Local y Gravado</h5>
+                    <h5 class="txt-light mb-0">Ventas por Vendedor — Clasificación Local / Gravado</h5>
                     @if($showReport && $dateFrom)
                         <span class="badge badge-light f-12">
                             {{ \Carbon\Carbon::parse($dateFrom)->format('d/m/Y') }}
@@ -89,17 +96,15 @@
                     <div class="{{ !$showReport ? 'd-none' : '' }}">
 
                         <!-- KPIs de Resumen -->
-                        <h5 class="txt-primary mb-3"><i class="fa fa-info-circle"></i> Totales Consolidados</h5>
+                        <h5 class="txt-primary mb-3"><i class="fa fa-info-circle"></i> Totales en USD</h5>
                         <div class="row">
                             <!-- Total Local -->
                             <div class="col-md-4 mb-3">
                                 <div class="card shadow-sm border-left border-info h-100">
                                     <div class="card-body p-3">
-                                        <div class="f-12 text-muted uppercase font-weight-bold">Ventas Locales (Sin IVA)</div>
-                                        <div class="f-18 font-weight-bold text-dark mt-1">
-                                            Bs. {{ number_format($totals['local_bs'], 2) }}
-                                        </div>
-                                        <div class="f-14 font-weight-bold text-info">
+                                        <div class="f-12 text-muted uppercase font-weight-bold">Ventas Locales</div>
+                                        <div class="f-11 text-muted">(Departamentos tipo LOCAL)</div>
+                                        <div class="f-20 font-weight-bold text-info mt-2">
                                             USD ${{ number_format($totals['local_usd'], 2) }}
                                         </div>
                                     </div>
@@ -109,11 +114,9 @@
                             <div class="col-md-4 mb-3">
                                 <div class="card shadow-sm border-left border-warning h-100">
                                     <div class="card-body p-3">
-                                        <div class="f-12 text-muted uppercase font-weight-bold">Ventas Gravadas (Con IVA)</div>
-                                        <div class="f-18 font-weight-bold text-dark mt-1">
-                                            Bs. {{ number_format($totals['gravado_bs'], 2) }}
-                                        </div>
-                                        <div class="f-14 font-weight-bold text-warning">
+                                        <div class="f-12 text-muted uppercase font-weight-bold">Ventas Gravadas</div>
+                                        <div class="f-11 text-muted">(Departamentos tipo GRAVADO)</div>
+                                        <div class="f-20 font-weight-bold text-warning mt-2">
                                             USD ${{ number_format($totals['gravado_usd'], 2) }}
                                         </div>
                                     </div>
@@ -123,11 +126,9 @@
                             <div class="col-md-4 mb-3">
                                 <div class="card shadow-sm border-left border-success h-100">
                                     <div class="card-body p-3">
-                                        <div class="f-12 text-muted uppercase font-weight-bold">Ventas Totales Netas</div>
-                                        <div class="f-18 font-weight-bold text-dark mt-1">
-                                            Bs. {{ number_format($totals['total_bs'], 2) }}
-                                        </div>
-                                        <div class="f-14 font-weight-bold text-success">
+                                        <div class="f-12 text-muted uppercase font-weight-bold">Total General</div>
+                                        <div class="f-11 text-muted">(Local + Gravado)</div>
+                                        <div class="f-20 font-weight-bold text-success mt-2">
                                             USD ${{ number_format($totals['total_usd'], 2) }}
                                         </div>
                                     </div>
@@ -136,34 +137,30 @@
                         </div>
 
                         <!-- Tabla Comparativa Detallada -->
-                        <h5 class="txt-primary mt-3 mb-2"><i class="fa fa-table"></i> Ventas Agrupadas por Vendedor</h5>
+                        <h5 class="txt-primary mt-3 mb-2"><i class="fa fa-table"></i> Detalle por Vendedor</h5>
                         <div class="table-responsive">
                             <table class="table table-bordered table-striped table-hover mt-1">
                                 <thead class="text-white" style="background: #3b3f5c">
                                     <tr>
                                         <th class="table-th text-white">Vendedor</th>
-                                        <th class="table-th text-white text-center">Local (Bs.)</th>
                                         <th class="table-th text-white text-center">Local (USD)</th>
-                                        <th class="table-th text-white text-center">Gravado (Bs.)</th>
                                         <th class="table-th text-white text-center">Gravado (USD)</th>
-                                        <th class="table-th text-white text-center">Total (Bs.)</th>
                                         <th class="table-th text-white text-center">Total (USD)</th>
+                                        <th class="table-th text-white text-center"># Ventas</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @forelse($reportData as $row)
                                         <tr>
                                             <td class="font-weight-bold bg-light">{{ $row->seller_name }}</td>
-                                            <td class="text-right">Bs. {{ number_format($row->local_bs, 2) }}</td>
                                             <td class="text-right text-info font-weight-bold">${{ number_format($row->local_usd, 2) }}</td>
-                                            <td class="text-right">Bs. {{ number_format($row->gravado_bs, 2) }}</td>
                                             <td class="text-right text-warning font-weight-bold">${{ number_format($row->gravado_usd, 2) }}</td>
-                                            <td class="text-right font-weight-bold">Bs. {{ number_format($row->total_bs, 2) }}</td>
                                             <td class="text-right text-success font-weight-bold">${{ number_format($row->total_usd, 2) }}</td>
+                                            <td class="text-center">{{ $row->sale_count }}</td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="7" class="text-center text-muted">No hay datos de ventas para los filtros seleccionados.</td>
+                                            <td colspan="5" class="text-center text-muted">No hay datos de ventas para los filtros seleccionados.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -171,16 +168,22 @@
                                     <tfoot style="background-color: #2c2f4a; font-weight: bold;">
                                         <tr>
                                             <td class="text-white">TOTALES</td>
-                                            <td class="text-right text-white">Bs. {{ number_format($totals['local_bs'], 2) }}</td>
-                                            <td class="text-right text-info">USD ${{ number_format($totals['local_usd'], 2) }}</td>
-                                            <td class="text-right text-white">Bs. {{ number_format($totals['gravado_bs'], 2) }}</td>
-                                            <td class="text-right text-warning">USD ${{ number_format($totals['gravado_usd'], 2) }}</td>
-                                            <td class="text-right text-white">Bs. {{ number_format($totals['total_bs'], 2) }}</td>
-                                            <td class="text-right text-success">USD ${{ number_format($totals['total_usd'], 2) }}</td>
+                                            <td class="text-right text-info">${{ number_format($totals['local_usd'], 2) }}</td>
+                                            <td class="text-right text-warning">${{ number_format($totals['gravado_usd'], 2) }}</td>
+                                            <td class="text-right text-success">${{ number_format($totals['total_usd'], 2) }}</td>
+                                            <td class="text-center text-white">{{ $reportData->sum('sale_count') }}</td>
                                         </tr>
                                     </tfoot>
                                 @endif
                             </table>
+                        </div>
+
+                        <!-- Nota aclaratoria -->
+                        <div class="alert alert-secondary mt-3 f-12">
+                            <i class="fa fa-info-circle me-1"></i>
+                            <b>Nota:</b> Las columnas <b>Local</b> y <b>Gravado</b> son clasificaciones según el <b>departamento de la categoría del producto</b>.
+                            No representan el tipo de pago ni si se aplicó IVA. Para cambiar la clasificación de un producto, editá su categoría en
+                            <b>Registros Maestros → Categorías</b>.
                         </div>
 
                     </div>
