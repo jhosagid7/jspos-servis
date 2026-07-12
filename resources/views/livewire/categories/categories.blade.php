@@ -15,6 +15,45 @@
                         @error('category.name') <span class="text-danger">{{ $message }}</span> @enderror
                     </div>
 
+                    <div class="form-group mt-3">
+                        <label>Departamento</label>
+                        <div class="d-flex align-items-center">
+                            <select wire:model.defer="category.department_id" class="form-control form-control-lg">
+                                <option value="">Seleccione Departamento</option>
+                                @foreach(\App\Models\Department::orderBy('name')->get() as $dept)
+                                    <option value="{{ $dept->id }}">{{ $dept->name }} ({{ strtoupper($dept->report_type) }})</option>
+                                @endforeach
+                            </select>
+                            <button type="button" class="btn btn-outline-primary ml-2 btn-lg" wire:click="$toggle('btnCreateDept')">
+                                <i class="fa fa-plus"></i>
+                            </button>
+                        </div>
+                        @error('category.department_id') <span class="text-danger">{{ $message }}</span> @enderror
+                    </div>
+
+                    @if($btnCreateDept)
+                    <div class="card border border-primary mt-3 p-3 bg-light">
+                        <h6 class="text-primary font-weight-bold">Nuevo Departamento</h6>
+                        <div class="form-group">
+                            <label>Nombre</label>
+                            <input wire:model="newDeptName" type="text" class="form-control" placeholder="Ej: Papelería">
+                            @error('newDeptName') <span class="text-danger">{{ $message }}</span> @enderror
+                        </div>
+                        <div class="form-group">
+                            <label>Tipo de Reporte</label>
+                            <select wire:model="newDeptType" class="form-control">
+                                <option value="local">LOCAL (Exento/Sin Impuestos)</option>
+                                <option value="gravado">GRAVADO (Sujeto a Impuestos/Diseños)</option>
+                            </select>
+                            @error('newDeptType') <span class="text-danger">{{ $message }}</span> @enderror
+                        </div>
+                        <div class="d-flex justify-content-end mt-2">
+                            <button type="button" class="btn btn-secondary btn-sm mr-2" wire:click="$set('btnCreateDept', false)">Cancelar</button>
+                            <button type="button" class="btn btn-primary btn-sm" wire:click="saveDepartment">Guardar</button>
+                        </div>
+                    </div>
+                    @endif
+
                     <div class="input-group mt-5 mb-3">
                         <label class="custom-file-label">Image</label>
                         <div class="custom-file">
@@ -80,10 +119,11 @@
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-responsive-md table-hover  text-center">
-                            <thead class="thead-primary">
+                             <thead class="thead-primary">
                                 <tr>
                                     <th class="text-center" width="100">Image</th>
-                                    <th width="60%">Name</th>
+                                    <th>Name</th>
+                                    <th>Departamento</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -104,6 +144,11 @@
                                     </td>
                                     <td>
                                         <div>{{$item->name }}</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-primary text-uppercase" style="font-size: 13px; font-weight: bold; padding: 6px 12px; border-radius: 4px;">
+                                            {{ $item->department ? $item->department->name : 'Otros' }}
+                                        </span>
                                     </td>
                                     <td>
 

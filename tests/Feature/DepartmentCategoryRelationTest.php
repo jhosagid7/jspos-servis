@@ -84,4 +84,26 @@ class DepartmentCategoryRelationTest extends TestCase
         $oldCategory->refresh();
         $this->assertEquals($otrosDept->id, $oldCategory->department_id);
     }
+
+    /** @test */
+    public function it_allows_inline_department_creation_and_category_assignment_in_livewire()
+    {
+        $this->seed(DepartmentSeeder::class);
+
+        \Livewire\Livewire::test(\App\Livewire\Categories::class)
+            ->set('newDeptName', 'Artículos Deportivos')
+            ->set('newDeptType', 'gravado')
+            ->call('saveDepartment')
+            ->assertSet('btnCreateDept', false)
+            ->assertSet('newDeptName', '')
+            ->assertSet('newDeptType', 'local');
+
+        $this->assertDatabaseHas('departments', [
+            'name' => 'Artículos Deportivos',
+            'report_type' => 'gravado',
+        ]);
+
+        $newDept = Department::where('name', 'Artículos Deportivos')->first();
+        $this->assertNotNull($newDept);
+    }
 }
