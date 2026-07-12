@@ -147,6 +147,10 @@ class PostProduct extends Form
 
     function store()
     {
+        if ($this->type === 'service') {
+            $this->manage_stock = 0;
+            $this->stock_qty = 0;
+        }
         $this->cleanUnauthorizedFeatures();
         $this->validate();
 
@@ -321,6 +325,10 @@ class PostProduct extends Form
 
     function update()
     {
+        if ($this->type === 'service') {
+            $this->manage_stock = 0;
+            $this->stock_qty = 0;
+        }
         $this->cleanUnauthorizedFeatures();
         $this->validate();
         

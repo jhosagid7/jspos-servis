@@ -596,14 +596,22 @@
                             <form class="row g-3">
                                 <div class="col-sm-12 col-md-6">
                                     <label class="form-label">Administrar Stock</label>
-                                    <select wire:model="form.manage_stock" class="form-control form-select">
-                                        <option value="1">Si, Controlar Stock</option>
-                                        <option value="0">Vender sin Límites</option>
-                                    </select>
+                                    @if($form->type === 'service')
+                                        <select class="form-control form-select" disabled>
+                                            <option value="0" selected>Vender sin Límites (Automático para Servicios)</option>
+                                        </select>
+                                    @else
+                                        <select wire:model="form.manage_stock" class="form-control form-select">
+                                            <option value="1">Si, Controlar Stock</option>
+                                            <option value="0">Vender sin Límites</option>
+                                        </select>
+                                    @endif
                                 </div>
                                 <div class="col-sm-12 col-md-6">
                                     <label class="form-label">Stock Actual</label>
-                                    @if((!empty($form->product_components) && !$form->is_pre_assembled) || $form->is_variable_quantity)
+                                    @if($form->type === 'service')
+                                        <input type="text" class="form-control" value="0 (Automático para Servicios)" disabled>
+                                    @elseif((!empty($form->product_components) && !$form->is_pre_assembled) || $form->is_variable_quantity)
                                         <input type="text" class="form-control" value="Calculado Dinámicamente" disabled>
                                         <small class="text-info">
                                             @if($form->is_variable_quantity)
@@ -618,11 +626,19 @@
                                 </div>
                                 <div class="col-sm-12 col-md-6">
                                     <label class="form-label">Stock Mínimo (Alerta)</label>
-                                    <input wire:model="form.low_stock" class="form-control" type="number">
+                                    @if($form->type === 'service')
+                                        <input class="form-control" type="text" value="0 (Desactivado para Servicios)" disabled>
+                                    @else
+                                        <input wire:model="form.low_stock" class="form-control" type="number">
+                                    @endif
                                 </div>
                                 <div class="col-sm-12 col-md-6">
                                     <label class="form-label">Stock Máximo (Ideal)</label>
-                                    <input wire:model="form.max_stock" class="form-control" type="number">
+                                    @if($form->type === 'service')
+                                        <input class="form-control" type="text" value="0 (Desactivado para Servicios)" disabled>
+                                    @else
+                                        <input wire:model="form.max_stock" class="form-control" type="number">
+                                    @endif
                                 </div>
                             </form>
 
