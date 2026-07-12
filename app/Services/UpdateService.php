@@ -18,7 +18,7 @@ class UpdateService
     public function __construct()
     {
         $this->owner = env('GITHUB_REPO_OWNER', 'jhosagid7');
-        $this->repo = env('GITHUB_REPO_NAME', 'jspos-sales');
+        $this->repo = env('GITHUB_REPO_NAME', 'jspos-service');
         // Get current version from CHANGELOG or config. For now assuming config or hardcoded for dev.
         // Ideally we parse CHANGELOG.md or have a version file.
         // Let's assume the user will define APP_VERSION in .env or we parse it.
