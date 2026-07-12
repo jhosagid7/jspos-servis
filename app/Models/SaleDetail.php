@@ -33,4 +33,13 @@ class SaleDetail extends Model
     {
         return $this->belongsTo(Product::class)->withTrashed();
     }
+
+    public function getProductNameAttribute()
+    {
+        $meta = is_string($this->metadata) ? json_decode($this->metadata, true) : $this->metadata;
+        if (is_array($meta) && !empty($meta['custom_name'])) {
+            return $meta['custom_name'];
+        }
+        return $this->product->name ?? 'Producto Eliminado';
+    }
 }

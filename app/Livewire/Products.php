@@ -108,6 +108,7 @@ class Products extends Component
         $this->form->name = $product->name;
         $this->form->sku = $product->sku;
         $this->form->description = $product->description;
+        $this->form->type = $product->type;
         $this->form->cost = $product->cost;
         $this->form->price = $product->price;
         $this->form->manage_stock = $product->manage_stock;

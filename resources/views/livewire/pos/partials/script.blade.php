@@ -203,15 +203,32 @@
                 },
                 buttons: {
                     cancel: "Cancelar",
-                    confirm: "Aceptar"
+                    confirm: "Siguiente"
                 }
-            }).then((value) => {
-                if (value === null) return;
-                if (value === '' || isNaN(parseFloat(value)) || parseFloat(value) <= 0) {
+            }).then((price) => {
+                if (price === null) return;
+                if (price === '' || isNaN(parseFloat(price)) || parseFloat(price) <= 0) {
                     swal("¡Error!", "Debes ingresar un precio válido mayor a 0.", "error");
                     return;
                 }
-                Livewire.dispatch('set-variable-price-and-add', { price: parseFloat(value) });
+                
+                swal({
+                    title: 'DESCRIPCIÓN (Opcional)',
+                    text: 'Ingresa una descripción para el trabajo realizado (Ej: Diseño de Logo):',
+                    content: {
+                        element: "input",
+                        attributes: {
+                            placeholder: "Descripción detallada",
+                            type: "text",
+                        },
+                    },
+                    buttons: {
+                        cancel: "Omitir",
+                        confirm: "Aceptar"
+                    }
+                }).then((desc) => {
+                    Livewire.dispatch('set-variable-price-and-add', { price: parseFloat(price), customName: desc });
+                });
             });
         })
 

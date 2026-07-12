@@ -129,7 +129,7 @@ trait PdfInvoiceTrait
                         if ($effectiveQty > 0) {
                             $unitPrice = $detail->sale_price;
                             
-                            $items[] = InvoiceItem::make($detail->product->name)
+                            $items[] = InvoiceItem::make($detail->product_name)
                                 ->reference($detail->product->sku ? $detail->product->sku : '')
                                 ->pricePerUnit($unitPrice)
                                 ->quantity($effectiveQty);
@@ -141,7 +141,7 @@ trait PdfInvoiceTrait
                         if ($effectiveQty > 0) {
                             $unitPrice = $detail->sale_price;
                             
-                            $items[] = InvoiceItem::make($detail->product->name)
+                            $items[] = InvoiceItem::make($detail->product_name)
                                 ->reference($detail->product->sku ? $detail->product->sku : '')
                                 ->pricePerUnit($unitPrice)
                                 ->quantity($effectiveQty);
@@ -307,7 +307,7 @@ trait PdfInvoiceTrait
                         
                         if ($effectiveQty > 0) {
                             $unitPrice = $detail->sale_price;
-                            $items[] = InvoiceItem::make($detail->product->name)
+                            $items[] = InvoiceItem::make($detail->product_name)
                                 ->reference($detail->product->sku ? $detail->product->sku : '')
                                 ->pricePerUnit($unitPrice)
                                 ->quantity($effectiveQty);
@@ -316,7 +316,7 @@ trait PdfInvoiceTrait
                     } else {
                         if ($effectiveQty > 0) {
                             $unitPrice = $detail->sale_price;
-                            $items[] = InvoiceItem::make($detail->product->name)
+                            $items[] = InvoiceItem::make($detail->product_name)
                                 ->reference($detail->product->sku ? $detail->product->sku : '')
                                 ->pricePerUnit($unitPrice)
                                 ->quantity($effectiveQty);
@@ -463,7 +463,7 @@ trait PdfInvoiceTrait
                                 $taxAmountLine = ($unitPrice * $effectiveQty) * $combinedPercent;
                             }
 
-                            $item = InvoiceItem::make($detail->product->name)
+                            $item = InvoiceItem::make($detail->product_name)
                                 ->reference($detail->product->sku ? $detail->product->sku : '')
                                 ->pricePerUnit($unitPrice)
                                 ->quantity($effectiveQty);
@@ -473,7 +473,7 @@ trait PdfInvoiceTrait
                         }
                     } else {
                         if ($effectiveQty > 0) {
-                            $items[] = InvoiceItem::make($detail->product->name)
+                            $items[] = InvoiceItem::make($detail->product_name)
                                 ->reference($detail->product->sku ? $detail->product->sku : '')
                                 ->pricePerUnit($detail->sale_price)
                                 ->quantity($effectiveQty);
@@ -633,7 +633,7 @@ trait PdfInvoiceTrait
                                 $taxAmountLine = ($unitPrice * $effectiveQty) * $combinedPercent;
                             }
 
-                            $item = InvoiceItem::make($detail->product->name)
+                            $item = InvoiceItem::make($detail->product_name)
                                 ->reference($detail->product->sku ? $detail->product->sku : '')
                                 ->pricePerUnit($unitPrice)
                                 ->quantity($effectiveQty);
@@ -643,7 +643,7 @@ trait PdfInvoiceTrait
                         }
                     } else {
                         if ($effectiveQty > 0) {
-                            $items[] = InvoiceItem::make($detail->product->name)
+                            $items[] = InvoiceItem::make($detail->product_name)
                                 ->reference($detail->product->sku ? $detail->product->sku : '')
                                 ->pricePerUnit($detail->sale_price)
                                 ->quantity($effectiveQty);
@@ -755,7 +755,7 @@ trait PdfInvoiceTrait
 
     //             foreach ($sale->details as $item) {
 
-    //                 $descripcion_1 = $this->cortar($item->product->name, 30);
+    //                 $descripcion_1 = $this->cortar($item->product_name, 30);
     //                 $row_1 = sprintf($maskRow, $descripcion_1[0], $item->quantity, '$' . number_format($item->sale_price, 2));
     //                 $printer->text($row_1 . "\n");
 
@@ -1046,7 +1046,7 @@ trait PdfInvoiceTrait
 
                 $items[] = [
                     'quantity' => number_format($qty, 2),
-                    'name' => $detail->product->name,
+                    'name' => $detail->product_name,
                     'base_price' => $baseUnit, // Base Unit
                     'total_base' => $itemTotalBase // Base Total
                 ];
@@ -1239,7 +1239,7 @@ trait PdfInvoiceTrait
             $items = [];
             foreach ($saleReturn->details as $detail) {
                 if ($detail->quantity_returned > 0) {
-                    $items[] = InvoiceItem::make($detail->product->name)
+                    $items[] = InvoiceItem::make($detail->product_name)
                         ->reference($detail->product->sku ? $detail->product->sku : '')
                         ->pricePerUnit($detail->unit_price)
                         ->quantity($detail->quantity_returned);

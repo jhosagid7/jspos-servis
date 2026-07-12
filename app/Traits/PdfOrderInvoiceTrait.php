@@ -86,7 +86,7 @@ trait PdfOrderInvoiceTrait
 
                 foreach ($order->details as $detail) {
 
-                    $items[] = InvoiceItem::make($detail->product->name)->reference($detail->product->sku ? $detail->product->sku : '')->pricePerUnit($detail->sale_price)->quantity($detail->quantity);
+                    $items[] = InvoiceItem::make($detail->product_name)->reference($detail->product->sku ? $detail->product->sku : '')->pricePerUnit($detail->sale_price)->quantity($detail->quantity);
                 }
 
                 $notes = [
@@ -178,7 +178,7 @@ trait PdfOrderInvoiceTrait
 
                 foreach ($order->details as $detail) {
 
-                    $items[] = InvoiceItem::make($detail->product->name)->reference($detail->product->sku ? $detail->product->sku : '')->pricePerUnit($detail->sale_price)->quantity($detail->quantity);
+                    $items[] = InvoiceItem::make($detail->product_name)->reference($detail->product->sku ? $detail->product->sku : '')->pricePerUnit($detail->sale_price)->quantity($detail->quantity);
                 }
 
                 $notes = [
@@ -268,7 +268,7 @@ trait PdfOrderInvoiceTrait
 
     //             foreach ($sale->details as $item) {
 
-    //                 $descripcion_1 = $this->cortar($item->product->name, 30);
+    //                 $descripcion_1 = $this->cortar($item->product_name, 30);
     //                 $row_1 = sprintf($maskRow, $descripcion_1[0], $item->quantity, '$' . number_format($item->sale_price, 2));
     //                 $printer->text($row_1 . "\n");
 

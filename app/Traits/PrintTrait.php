@@ -175,7 +175,7 @@ trait PrintTrait
 
                 foreach ($sale->details as $item) {
 
-                    $descripcion_1 = $this->cortar($item->product->name, $col1Width);
+                    $descripcion_1 = $this->cortar($item->product_name, $col1Width);
                     $row_1 = sprintf($maskRow, $descripcion_1[0], $item->quantity, $currencySymbol . number_format($item->sale_price, 2));
                     $printer->text($row_1 . "\n");
 
@@ -735,7 +735,7 @@ trait PrintTrait
                 $printer->text($separator . "\n");
 
                 foreach ($order->details as $item) {
-                    $descripcion_1 = $this->cortar($item->product->name, $col1Width);
+                    $descripcion_1 = $this->cortar($item->product_name, $col1Width);
                     $row_1 = sprintf($maskRow, $descripcion_1[0], $item->quantity, '$' . number_format($item->sale_price, 2));
                     $printer->text($row_1 . "\n");
 
@@ -1012,7 +1012,7 @@ trait PrintTrait
                      $totalBase += $itemTotalBase;
 
                      // Print Item
-                     $pName = $item->product->name;
+                     $pName = $item->product_name;
                      $pQty = number_format($qty, 2);
                      $pBase = number_format($baseUnit, 2);
                      $pTotal = number_format($itemTotalBase, 2);

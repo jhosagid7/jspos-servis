@@ -183,7 +183,7 @@
                                         <tr class="text-center">
                                             <td>{{ $detail->id }}</td>
                                             <td>
-                                                {{ $detail->product->name }}
+                                                {{ $detail->product_name }}
 
                                             </td>
                                             <td>{{ $qty }}</td>
@@ -694,7 +694,7 @@
                                                         <ul class="mb-0 pl-3">
                                                             @foreach($return->details as $retDetail)
                                                                 <li>
-                                                                    {{ (int)$retDetail->quantity }}x {{ $retDetail->saleDetail->product->name ?? 'Producto Eliminado' }} 
+                                                                    {{ (int)$retDetail->quantity }}x {{ $retDetail->saleDetail->product_name ?? 'Producto Eliminado' }} 
                                                                     <small class="text-muted">({{ $currencySymbol }}{{ number_format($retDetail->unit_price, 2) }} c/u)</small>
                                                                 </li>
                                                             @endforeach

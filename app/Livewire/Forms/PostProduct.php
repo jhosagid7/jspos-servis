@@ -187,6 +187,7 @@ class PostProduct extends Form
         $product->auditEventContext = 'EDICIÓN MANUAL';
         $product->fill([
             'name' => $this->name,
+            'type' => $this->type,
             'description' => $this->description,
             'sku' => $this->sku,
             'cost' => $this->cost,
@@ -382,6 +383,7 @@ class PostProduct extends Form
         $product->auditEventContext = 'EDICIÓN MANUAL';
         $product->update([
             'name' => $this->name,
+            'type' => $this->type,
             'description' => $this->description,
             'sku' => $this->sku,
             'cost' => $this->cost,

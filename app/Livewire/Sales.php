@@ -794,12 +794,12 @@ class Sales extends Component
     }
 
     #[On('set-variable-price-and-add')]
-    public function setVariablePriceAndAdd($price)
+    public function setVariablePriceAndAdd($price, $customName = null)
     {
         if ($this->pendingProductToAdd) {
             $product = Product::find($this->pendingProductToAdd);
             if ($product) {
-                $this->AddProduct($product, $this->pendingQtyToAdd, $this->pendingWarehouseId, $price);
+                $this->AddProduct($product, $this->pendingQtyToAdd, $this->pendingWarehouseId, $price, $customName);
             }
             $this->pendingProductToAdd = null;
             $this->pendingQtyToAdd = 1;
@@ -1897,7 +1897,7 @@ class Sales extends Component
         }
     }
 
-    function AddProduct(Product $product, $qty = 1, $warehouseId = null, $customPrice = null)
+    function AddProduct(Product $product, $qty = 1, $warehouseId = null, $customPrice = null, $customName = null)
     {
         // Guard Clause: Foreign Sellers MUST select a customer first
         if (!Auth::user()->can('sales.manage_adjustments') && !$this->customer) {
@@ -2229,7 +2229,8 @@ class Sales extends Component
         $itemCart = [
             'id' => $uid,
             'pid' => $product->id,
-            'name' => $product->name,
+            'name' => $customName ? $customName : $product->name,
+            'custom_name' => $customName,
             'sku' => $product->sku,
             'price1' => $basePriceInPrimary, 
             'price2' => $product->price2 * $exchangeRate, 
@@ -4163,6 +4164,14 @@ class Sales extends Component
                      }
                 }
 
+                $metadata = [];
+                if (isset($item['product_item_id'])) {
+                    $metadata['product_item_id'] = $item['product_item_id'];
+                }
+                if (!empty($item['custom_name'])) {
+                    $metadata['custom_name'] = $item['custom_name'];
+                }
+
                 return [
                     'product_id' => $item['pid'],
                     'sale_id' => $sale->id,
@@ -4179,7 +4188,7 @@ class Sales extends Component
                     'created_at' => Carbon::now(),
                     'discount' => 0,
                     'warehouse_id' => $item['warehouse_id'] ?? null, // Store warehouse ID
-                    'metadata' => isset($item['product_item_id']) ? json_encode(['product_item_id' => $item['product_item_id']]) : null
+                    'metadata' => !empty($metadata) ? json_encode($metadata) : null
                 ];
             })->toArray();
 
