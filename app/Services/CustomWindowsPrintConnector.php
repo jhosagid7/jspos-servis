@@ -180,12 +180,35 @@ class CustomWindowsPrintConnector implements PrintConnector
             
             $filename = tempnam(sys_get_temp_dir(), "escpos");
             file_put_contents($filename, $data);
-            if (!copy($filename, $device)) {
-                 unlink($filename);
-                 $authInfo = $this->userName ? " with User: " . $this->userName : " (No Auth)";
-                 throw new Exception("Failed to copy file to printer at $device $authInfo" . $netUseError);
+
+            // Use cmd /c copy via proc_open with 5-second timeout to avoid blocking HTTP thread
+            $copyCmd = 'cmd /c copy /b ' . escapeshellarg($filename) . ' ' . escapeshellarg($device) . ' > nul 2>&1';
+            $descriptors = [0 => ["pipe", "r"], 1 => ["pipe", "w"], 2 => ["pipe", "w"]];
+            $proc = proc_open($copyCmd, $descriptors, $fd);
+            $copySuccess = false;
+            if (is_resource($proc)) {
+                fclose($fd[0]);
+                $deadline = microtime(true) + 5.0;
+                while (microtime(true) < $deadline) {
+                    $status = proc_get_status($proc);
+                    if (!$status['running']) {
+                        $copySuccess = ($status['exitcode'] === 0);
+                        break;
+                    }
+                    usleep(100000); // 100ms poll
+                }
+                if (microtime(true) >= $deadline) {
+                    proc_terminate($proc);
+                }
+                fclose($fd[1]);
+                fclose($fd[2]);
+                proc_close($proc);
             }
             unlink($filename);
+            if (!$copySuccess) {
+                $authInfo = $this->userName ? " with User: " . $this->userName : " (No Auth)";
+                throw new Exception("Failed to copy file to printer at $device $authInfo" . $netUseError);
+            }
         } else {
             if (strpos($this->printerName, '\\\\') === 0) {
                 // Check if UNC path hostname is online
@@ -211,7 +234,33 @@ class CustomWindowsPrintConnector implements PrintConnector
                 }
             }
 
-            if (file_put_contents($this->printerName, $data) === false) {
+            // Use cmd /c copy via proc_open with 5-second timeout to avoid blocking HTTP thread
+            $filename2 = tempnam(sys_get_temp_dir(), "escpos");
+            file_put_contents($filename2, $data);
+            $copyCmd2 = 'cmd /c copy /b ' . escapeshellarg($filename2) . ' ' . escapeshellarg($this->printerName) . ' > nul 2>&1';
+            $descriptors2 = [0 => ["pipe", "r"], 1 => ["pipe", "w"], 2 => ["pipe", "w"]];
+            $proc2 = proc_open($copyCmd2, $descriptors2, $fd2);
+            $copySuccess2 = false;
+            if (is_resource($proc2)) {
+                fclose($fd2[0]);
+                $deadline2 = microtime(true) + 5.0;
+                while (microtime(true) < $deadline2) {
+                    $status2 = proc_get_status($proc2);
+                    if (!$status2['running']) {
+                        $copySuccess2 = ($status2['exitcode'] === 0);
+                        break;
+                    }
+                    usleep(100000);
+                }
+                if (microtime(true) >= $deadline2) {
+                    proc_terminate($proc2);
+                }
+                fclose($fd2[1]);
+                fclose($fd2[2]);
+                proc_close($proc2);
+            }
+            @unlink($filename2);
+            if (!$copySuccess2) {
                 throw new Exception("Failed to write file to printer at " . $this->printerName);
             }
         }

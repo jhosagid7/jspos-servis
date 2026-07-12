@@ -4537,16 +4537,25 @@ class Sales extends Component
             session()->forget('change');
             session()->forget('totalCartAtPayment');
 
-            // mike42
-            $this->printSale($sale->id);
+            // mike42 - Fire-and-forget: launch in background process so HTTP response is not blocked
+            $saleIdForPrint = $sale->id;
+            try {
+                $phpBin = PHP_BINARY;
+                $artisan = base_path('artisan');
+                // On Windows, use cmd /c START /B to detach the child process
+                $cmd = 'cmd /c START /B "" "' . $phpBin . '" "' . $artisan . '" pos:print-sale ' . $saleIdForPrint . ' > nul 2>&1';
+                pclose(popen($cmd, 'r'));
+            } catch (\Throwable $pe) {
+                \Illuminate\Support\Facades\Log::warning("Could not launch background print process: " . $pe->getMessage());
+            }
 
             // base64 / printerapp
-            $b64 = $this->jsonData($sale->id);
-
-            $this->dispatch(
-                'print-json',
-                data: $b64
-            );
+            try {
+                $b64 = $this->jsonData($sale->id);
+                $this->dispatch('print-json', data: $b64);
+            } catch (\Throwable $je) {
+                \Illuminate\Support\Facades\Log::warning("jsonData dispatch failed: " . $je->getMessage());
+            }
         } catch (\Exception $th) {
             DB::rollBack();
             $this->dispatch('noty', msg: "Error al intentar guardar la venta \n {$th->getMessage()}");
