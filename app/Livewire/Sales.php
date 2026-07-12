@@ -1137,6 +1137,24 @@ class Sales extends Component
 
         $this->customer = session('sale_customer', null);
         
+        if (!$this->customer) {
+            $defaultCustomer = \App\Models\Customer::where('type', 'Consumidor Final')->first()
+                ?? \App\Models\Customer::first();
+
+            if (!$defaultCustomer) {
+                $defaultCustomer = \App\Models\Customer::create([
+                    'name' => 'Consumidor Final',
+                    'address' => 'N/A',
+                    'email' => 'final@cliente.com',
+                    'phone' => '00000000',
+                    'type' => 'Consumidor Final',
+                    'customer_commission_1_percentage' => 0,
+                    'customer_commission_1_threshold' => 0
+                ]);
+            }
+            $this->setCustomer($defaultCustomer);
+        }
+        
         // Re-hydrate config models if lost (e.g., F5 refresh loses untyped component properties)
         if ($this->customer) {
             if (!$this->sellerConfig && isset($this->customer['seller_id'])) {
