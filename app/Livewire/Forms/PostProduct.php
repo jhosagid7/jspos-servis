@@ -151,7 +151,15 @@ class PostProduct extends Form
             $this->manage_stock = 0;
             $this->stock_qty = 0;
             if (empty($this->supplier_id) || $this->supplier_id == 0) {
-                $this->supplier_id = \App\Models\Supplier::first()->id ?? 1;
+                $supplier = \App\Models\Supplier::first();
+                if (!$supplier) {
+                    $supplier = \App\Models\Supplier::create([
+                        'name' => 'Proveedor General (Servicios)',
+                        'phone' => 'N/A',
+                        'address' => 'N/A'
+                    ]);
+                }
+                $this->supplier_id = $supplier->id;
             }
         }
         $this->cleanUnauthorizedFeatures();
@@ -332,7 +340,15 @@ class PostProduct extends Form
             $this->manage_stock = 0;
             $this->stock_qty = 0;
             if (empty($this->supplier_id) || $this->supplier_id == 0) {
-                $this->supplier_id = \App\Models\Supplier::first()->id ?? 1;
+                $supplier = \App\Models\Supplier::first();
+                if (!$supplier) {
+                    $supplier = \App\Models\Supplier::create([
+                        'name' => 'Proveedor General (Servicios)',
+                        'phone' => 'N/A',
+                        'address' => 'N/A'
+                    ]);
+                }
+                $this->supplier_id = $supplier->id;
             }
         }
         $this->cleanUnauthorizedFeatures();
