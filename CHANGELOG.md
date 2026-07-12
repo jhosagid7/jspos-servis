@@ -1,3 +1,8 @@
+## [1.10.233] - 2026-07-12
+### Changed
+- **Sistema de Actualizaciones**:
+  * Se corrigió y homologó el nombre del repositorio en el actualizador automático. Ahora apunta correctamente a `jspos-service` en lugar de `jspos-servis` o `jspos-sales` como venía heredado del proyecto original, garantizando que el sistema consulte y descargue siempre los últimos releases del repositorio correcto.
+
 ## [1.10.232] - 2026-07-12
 ### Added
 - **Productos de Precio Variable**:
