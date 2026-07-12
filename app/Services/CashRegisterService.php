@@ -18,9 +18,19 @@ class CashRegisterService
     public function getActiveCashRegister($userId = null)
     {
         $userId = $userId ?? Auth::id();
-        return CashRegister::where('user_id', $userId)
+        $register = CashRegister::where('user_id', $userId)
             ->where('status', 'open')
             ->first();
+
+        if (!$register && $userId) {
+            try {
+                $register = $this->openRegister($userId, [], 'Apertura automática de caja para POS');
+            } catch (\Exception $e) {
+                \Log::error("Failed to auto-open cash register for user {$userId}: " . $e->getMessage());
+            }
+        }
+
+        return $register;
     }
 
     /**
@@ -115,14 +125,8 @@ class CashRegisterService
     {
         $currentBalance = $this->getBalance($cashRegisterId, $currencyCode);
         
-        if ($currentBalance < $amountNeeded) {
-            return [
-                'valid' => false,
-                'current_balance' => $currentBalance,
-                'shortage' => $amountNeeded - $currentBalance
-            ];
-        }
-
+        // Bypassed: always allow giving change to prevent blocking POS sales.
+        // Balance will register normally (and can go negative if no opening cash was entered).
         return ['valid' => true, 'current_balance' => $currentBalance];
     }
 
