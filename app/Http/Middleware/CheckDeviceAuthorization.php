@@ -21,7 +21,7 @@ class CheckDeviceAuthorization
         }
 
         // Exclude public routes and login/logout (Both Web and API)
-        if ($request->is('login', 'logout', 'register', 'password/*', 'access-denied', 'api/login', 'api/vip/login')) {
+        if ($request->is('login', 'logout', 'register', 'password/*', 'access-denied', 'api/login', 'api/vip/login', 'license', 'license/*')) {
             return $next($request);
         }
 

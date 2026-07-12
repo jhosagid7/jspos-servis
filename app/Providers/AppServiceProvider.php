@@ -68,5 +68,23 @@ class AppServiceProvider extends ServiceProvider
         } catch (\Throwable $th) {
             // Fails silently
         }
+
+        // Ajustar endpoints de Livewire de forma dinámica para soportar subcarpetas locales
+        try {
+            if (!app()->runningInConsole()) {
+                $baseUrl = request()->getBaseUrl();
+                if (!empty($baseUrl)) {
+                    \Livewire\Livewire::setUpdateRoute(function ($handle) use ($baseUrl) {
+                        return \Illuminate\Support\Facades\Route::post($baseUrl . '/livewire/update', $handle);
+                    });
+                    
+                    \Livewire\Livewire::setScriptRoute(function ($handle) use ($baseUrl) {
+                        return \Illuminate\Support\Facades\Route::get($baseUrl . '/livewire/livewire.js', $handle);
+                    });
+                }
+            }
+        } catch (\Throwable $e) {
+            // Silencioso en CLI
+        }
     }
 }

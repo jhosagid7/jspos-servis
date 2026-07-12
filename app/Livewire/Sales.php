@@ -762,6 +762,7 @@ class Sales extends Component
         $newItem = $oldItem;
         $newItem['base_price'] = $price; // Update base_price with manual override
         $newItem['sale_price'] = $price; // Temporary, Calculator will overwrite
+        $newItem['is_custom_price'] = true; // Mark as custom price override
 
         $productModel = \App\Models\Product::find($newItem['pid']);
         $values = $this->Calculator($newItem['base_price'], $newItem['qty'], $productModel);
@@ -790,6 +791,20 @@ class Sales extends Component
         $this->save();
         $this->dispatch('refresh');
         $this->dispatch('noty', msg: 'PRECIO ACTUALIZADO');
+    }
+
+    #[On('set-variable-price-and-add')]
+    public function setVariablePriceAndAdd($price)
+    {
+        if ($this->pendingProductToAdd) {
+            $product = Product::find($this->pendingProductToAdd);
+            if ($product) {
+                $this->AddProduct($product, $this->pendingQtyToAdd, $this->pendingWarehouseId, $price);
+            }
+            $this->pendingProductToAdd = null;
+            $this->pendingQtyToAdd = 1;
+            $this->pendingWarehouseId = null;
+        }
     }
 
 
@@ -1864,7 +1879,7 @@ class Sales extends Component
         }
     }
 
-    function AddProduct(Product $product, $qty = 1, $warehouseId = null)
+    function AddProduct(Product $product, $qty = 1, $warehouseId = null, $customPrice = null)
     {
         // Guard Clause: Foreign Sellers MUST select a customer first
         if (!Auth::user()->can('sales.manage_adjustments') && !$this->customer) {
@@ -1887,6 +1902,15 @@ class Sales extends Component
                 $this->dispatch('noty', msg: 'No hay depósitos activos configurados.');
                 return;
             }
+        }
+
+        // VARIABLE PRICE CHECK
+        if ($product->is_variable_price && $customPrice === null) {
+            $this->pendingProductToAdd = $product->id;
+            $this->pendingQtyToAdd = $qty;
+            $this->pendingWarehouseId = $targetWarehouseId;
+            $this->dispatch('prompt-variable-price', productName: $product->name);
+            return;
         }
 
         // Permission Check: Mix Warehouses
@@ -2096,55 +2120,64 @@ class Sales extends Component
             }
         }
 
-        // Determine Base Price (Volume or Standard)
-        $basePrice = $this->determinePrice($product, $qty);
-        $basePriceInPrimary = $basePrice * $exchangeRate;
-
-        // Calculate Extras (Commission, Freight, Diff)
-        $comm = 0;
-        $freight = 0;
-        $diff = 0;
-
-        $customerConfig = $this->customerConfig;
-
-        // Regla de Moneda para Reglas de Precio (USD/COP únicamente)
-        $currency = collect($this->currencies)->firstWhere('id', $this->invoiceCurrency_id);
-        $currencyCode = $currency ? strtoupper($currency->code) : '';
-        $isUsdOrCop = in_array($currencyCode, ['USD', 'COP']);
-
-        if ($customerConfig && ($this->applyCommissions || $this->applyFreight)) {
-            
-            // Priority 1: Customer Config
-            $commissionPercent = floatval($customerConfig->commission_percent);
-            $freightPercent = floatval($customerConfig->freight_percent);
-            $exchangeDiffPercent = floatval($customerConfig->exchange_diff_percent);
-
-            // Commission
-            $comm = ($basePriceInPrimary * $commissionPercent) / 100;
-            
-            // Freight (Smart Logic)
-            if ($product->freight_type != 'none') {
-                // Product Specific Freight
-                if ($product->freight_type == 'fixed') {
-                    $freightUnit = $product->freight_value; // Fixed amount per unit
-                } else {
-                    $freightUnit = ($basePriceInPrimary * $product->freight_value) / 100;
-                }
-            } else {
-                // General Freight
-                $freightUnit = ($basePriceInPrimary * $freightPercent) / 100;
+        if ($customPrice !== null) {
+            $conversionFactor = $this->getConversionFactor();
+            if ($conversionFactor > 0) {
+                $customPrice = $customPrice / $conversionFactor;
             }
-            $freight = $freightUnit; // Total freight added to unit price
-
-            // Intermediate Price (Base + Comm + Freight)
-            $intermediatePrice = $basePriceInPrimary + $comm + $freight;
-            
-            // Exchange Diff (Applied on Intermediate Price)
-            $diff = ($intermediatePrice * $exchangeDiffPercent) / 100;
-
-            $salePrice = $intermediatePrice + $diff;
+            $basePriceInPrimary = $customPrice;
+            $salePrice = $customPrice;
         } else {
-            $salePrice = $basePriceInPrimary;
+            // Determine Base Price (Volume or Standard)
+            $basePrice = $this->determinePrice($product, $qty);
+            $basePriceInPrimary = $basePrice * $exchangeRate;
+
+            // Calculate Extras (Commission, Freight, Diff)
+            $comm = 0;
+            $freight = 0;
+            $diff = 0;
+
+            $customerConfig = $this->customerConfig;
+
+            // Regla de Moneda para Reglas de Precio (USD/COP únicamente)
+            $currency = collect($this->currencies)->firstWhere('id', $this->invoiceCurrency_id);
+            $currencyCode = $currency ? strtoupper($currency->code) : '';
+            $isUsdOrCop = in_array($currencyCode, ['USD', 'COP']);
+
+            if ($customerConfig && ($this->applyCommissions || $this->applyFreight)) {
+                
+                // Priority 1: Customer Config
+                $commissionPercent = floatval($customerConfig->commission_percent);
+                $freightPercent = floatval($customerConfig->freight_percent);
+                $exchangeDiffPercent = floatval($customerConfig->exchange_diff_percent);
+
+                // Commission
+                $comm = ($basePriceInPrimary * $commissionPercent) / 100;
+                
+                // Freight (Smart Logic)
+                if ($product->freight_type != 'none') {
+                    // Product Specific Freight
+                    if ($product->freight_type == 'fixed') {
+                        $freightUnit = $product->freight_value; // Fixed amount per unit
+                    } else {
+                        $freightUnit = ($basePriceInPrimary * $product->freight_value) / 100;
+                    }
+                } else {
+                    // General Freight
+                    $freightUnit = ($basePriceInPrimary * $freightPercent) / 100;
+                }
+                $freight = $freightUnit; // Total freight added to unit price
+
+                // Intermediate Price (Base + Comm + Freight)
+                $intermediatePrice = $basePriceInPrimary + $comm + $freight;
+                
+                // Exchange Diff (Applied on Intermediate Price)
+                $diff = ($intermediatePrice * $exchangeDiffPercent) / 100;
+
+                $salePrice = $intermediatePrice + $diff;
+            } else {
+                $salePrice = $basePriceInPrimary;
+            }
         }
 
         // Obtener el número de decimales configurados
@@ -2194,7 +2227,8 @@ class Sales extends Component
             'warehouse_id' => $targetWarehouseId, // Store warehouse ID
             'freight_type' => $product->freight_type, // Store for recalculation
             'freight_value' => $product->freight_value, // Store for recalculation
-            'base_price' => $basePriceInPrimary // Store original base price to avoid compounding
+            'base_price' => $basePriceInPrimary, // Store original base price to avoid compounding
+            'is_custom_price' => ($customPrice !== null)
         ];
 
         $this->cart->push($itemCart);
@@ -2345,8 +2379,11 @@ class Sales extends Component
         foreach ($cartArray as &$item) {
             $productModel = \App\Models\Product::find($item['pid']);
             if ($productModel) {
-                 // Recalcular el precio base usando la lógica de Tiers + Moneda
-                 $baseForCalc = $this->determinePrice($productModel, $item['qty']);
+                 $isCustom = $item['is_custom_price'] ?? false;
+                 // Recalcular el precio base usando la lógica de Tiers o usar el personalizado
+                 $baseForCalc = $isCustom
+                     ? $item['base_price']
+                     : $this->determinePrice($productModel, $item['qty']);
                  
                  $result = $this->Calculator($baseForCalc, $item['qty'], $productModel);
                  $item['base_price'] = $baseForCalc; // Actualizar base_price para futuras referencias
@@ -2831,21 +2868,20 @@ class Sales extends Component
         $productModel = \App\Models\Product::find($newItem['pid']);
         
         // Determine correct base price
-        // If the product has volume tiers, we MUST recalculate based on new QTY
-        $basePriceFromTiers = $this->determinePrice($productModel, $newItem['qty']);
+        $isCustom = $oldItem['is_custom_price'] ?? false;
         
-        $primaryCurrency = CurrencyHelper::getPrimaryCurrency();
-        $exchangeRate = $primaryCurrency ? $primaryCurrency->exchange_rate : 1;
-        
-        // Convert tier price to primary currency
-        $basePriceFromTiersInPrimary = $basePriceFromTiers * $exchangeRate;
+        if ($isCustom) {
+            $basePriceInPrimary = $oldItem['base_price'];
+        } else {
+            // If the product has volume tiers, we MUST recalculate based on new QTY
+            $basePriceFromTiers = $this->determinePrice($productModel, $newItem['qty']);
+            $primaryCurrency = CurrencyHelper::getPrimaryCurrency();
+            $exchangeRate = $primaryCurrency ? $primaryCurrency->exchange_rate : 1;
+            $basePriceInPrimary = $basePriceFromTiers * $exchangeRate;
+        }
 
         // Update base_price in item
-        // Note: If we had a manual override flag, we would check it here. 
-        // For now, we assume if Qty changes, we re-evaluate tiers unless it's a manual price (which we can't easily track without a flag).
-        // However, the previous logic was preserving 'base_price' from oldItem regardless of qty change, which broke tiers.
-        // We will update base_price.
-        $newItem['base_price'] = $basePriceFromTiersInPrimary;
+        $newItem['base_price'] = $basePriceInPrimary;
 
         $base = $newItem['base_price'];
         

@@ -188,6 +188,33 @@
             $('#modalProcessOrder').modal('hide')
         })
 
+        Livewire.on('prompt-variable-price', event => {
+            let productName = event.productName || 'Producto';
+            swal({
+                title: 'PRECIO VARIABLE - ' + productName,
+                text: 'Ingresa el precio del servicio:',
+                content: {
+                    element: "input",
+                    attributes: {
+                        placeholder: "Ej: 15.50",
+                        type: "number",
+                        step: "any"
+                    },
+                },
+                buttons: {
+                    cancel: "Cancelar",
+                    confirm: "Aceptar"
+                }
+            }).then((value) => {
+                if (value === null) return;
+                if (value === '' || isNaN(parseFloat(value)) || parseFloat(value) <= 0) {
+                    swal("¡Error!", "Debes ingresar un precio válido mayor a 0.", "error");
+                    return;
+                }
+                Livewire.dispatch('set-variable-price-and-add', { price: parseFloat(value) });
+            });
+        })
+
     }) // livewire init
 
 

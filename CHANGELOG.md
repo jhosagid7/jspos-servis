@@ -1,3 +1,16 @@
+## [1.10.230] - 2026-07-11
+### Added
+- **Clasificación por Departamentos**:
+  * Creada estructura y relación de categorías con departamentos para clasificar productos en Local o Gravado.
+  * Agregado seeder automático de departamentos por defecto en migración.
+- **Precios Variables y Manuales en POS**:
+  * Implementado prompt interactivo con SweetAlert para solicitar precio en productos con precio variable antes de agregarse al carrito.
+  * Añadida persistencia de precios manuales ingresados por el usuario para evitar que sean pisados al recalcular o cambiar cantidades del carrito.
+- **Reporte Agrupado por Vendedor**:
+  * Diseñado un nuevo reporte consolidado de ventas que agrupa los totales de cada vendedor en columnas separadas para LOCAL y GRAVADO, con KPIs informativos consolidados en Bs. y USD.
+- **Ruteo Dinámico de Livewire en Subdirectorios**:
+  * Publicados assets de Livewire de forma estática en `public/vendor/livewire` y configurados dinámicamente sus endpoints en `AppServiceProvider` para solucionar problemas de ruteo local 404 en servidores Apache con subcarpetas.
+
 ## [1.10.229] - 2026-07-10
 ### Fixed
 - **Listado de Productos en App de Bolsas**:

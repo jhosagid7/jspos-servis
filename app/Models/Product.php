@@ -59,12 +59,14 @@ class Product extends Model
         'freight_type',
         'freight_value',
         'price_group_id',
-        'is_raw_material'
+        'is_raw_material',
+        'is_variable_price'
     ];
 
     protected $casts = [
         'show_in_sales' => 'boolean',
         'is_raw_material' => 'boolean',
+        'is_variable_price' => 'boolean',
     ];
 
     //relationships
