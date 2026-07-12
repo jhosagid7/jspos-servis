@@ -1,3 +1,21 @@
+## [1.10.231] - 2026-07-12
+### Added
+- **Reporte Agrupado por Vendedor**:
+  * Botón "Hoy" para cargar rápidamente el reporte del día actual.
+  * Funcionalidad para previsualizar el reporte en PDF mediante un modal.
+  * Botón para descarga directa del reporte en formato PDF.
+  * Añadido enlace de "Ventas por Vendedor" en el menú de barra lateral dentro de Centro de Reportes.
+- **Rendimiento**:
+  * Optimización de `hasOpenRegister` para consultar la base de datos directamente, evitando cargar el modelo completo.
+
+### Fixed
+- **Impresión de Ventas (POS)**:
+  * El POS se colgaba al intentar imprimir; esto se solucionó procesando la impresión de manera asíncrona mediante un comando de Artisan en segundo plano (`cmd /c START /B`).
+- **Reporte Agrupado por Vendedor**:
+  * Eliminadas las columnas redundantes en Bolívares que causaban confusión debido a la tasa de cambio 1:1, mostrando únicamente los valores en USD.
+  * Añadida columna con el recuento total de ventas (# Ventas).
+  * Incluida nota aclaratoria sobre el significado de las clasificaciones "Local" y "Gravado", las cuales dependen de la categoría del producto y no de si se aplica IVA.
+
 ## [1.10.230] - 2026-07-11
 ### Added
 - **Clasificación por Departamentos**:
