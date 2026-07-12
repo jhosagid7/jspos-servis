@@ -173,6 +173,7 @@ Route::middleware('auth')->group(function () {
         Route::get('sellers-performance', \App\Livewire\Reports\SellersPerformanceReport::class)->name('reports.sellers.performance')->middleware(['can:reports.sales', 'module:module_advanced_reports']);
         Route::get('sellers-performance/pdf', [\App\Http\Controllers\ReportController::class, 'sellersPerformancePdf'])->name('reports.sellers.performance.pdf')->middleware(['can:reports.sales', 'module:module_advanced_reports']);
         Route::get('seller-grouped', \App\Livewire\Reports\SellerGroupedReport::class)->name('reports.seller.grouped')->middleware('can:reports.sales');
+        Route::get('seller-grouped/pdf', [\App\Http\Controllers\ReportController::class, 'sellerGroupedPdf'])->name('reports.seller.grouped.pdf')->middleware('can:reports.sales');
         Route::get('operators-precision', \App\Livewire\Reports\BillingOperatorsReport::class)->name('reports.operators.precision')->middleware(['can:reports.sales', 'module:module_advanced_reports']);
         Route::get('operators-precision/pdf', [\App\Http\Controllers\ReportController::class, 'billingOperatorsPdf'])->name('reports.operators.precision.pdf')->middleware(['can:reports.sales', 'module:module_advanced_reports']);
         Route::get('exchange-diff', \App\Livewire\Reports\ExchangeDiffReport::class)->name('reports.exchange.diff')->middleware(['can:reports.sales', 'module:module_advanced_reports']);

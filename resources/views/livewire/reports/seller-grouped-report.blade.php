@@ -33,12 +33,31 @@
                         <input type="date" wire:model.live="dateTo" class="form-control form-control-sm mt-1">
                     </div>
 
+                    <!-- Botón Hoy -->
+                    <div class="mt-2">
+                        <button wire:click.prevent="setToday" class="btn btn-outline-secondary btn-sm w-100">
+                            <i class="fa fa-calendar-day me-1"></i> Hoy
+                        </button>
+                    </div>
+
                     <!-- Botones de Acción -->
-                    <div class="mt-4">
+                    <div class="mt-3">
                         <button wire:key="btn-seller-grouped-search" wire:click.prevent="searchData" class="btn btn-dark w-100">
                             <i class="fa fa-sync"></i> Generar Reporte
                         </button>
                     </div>
+
+                    <!-- Botones PDF (solo visible cuando hay datos) -->
+                    @if($showReport)
+                    <div class="mt-2 d-flex gap-1">
+                        <button wire:click.prevent="openPdfPreview" class="btn btn-outline-danger btn-sm flex-fill" title="Previsualizar PDF">
+                            <i class="fa fa-eye"></i> Vista Previa
+                        </button>
+                        <button wire:click.prevent="generatePdf" class="btn btn-danger btn-sm flex-fill" title="Descargar PDF">
+                            <i class="fa fa-file-pdf"></i> PDF
+                        </button>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -46,19 +65,29 @@
         <!-- Panel de Resultados -->
         <div class="col-sm-12 col-md-9">
             <div class="card card-absolute">
-                <div class="card-header bg-dark">
-                    <h5 class="txt-light">Ventas por Vendedor - Desglose Local y Gravado</h5>
+                <div class="card-header bg-dark d-flex justify-content-between align-items-center">
+                    <h5 class="txt-light mb-0">Ventas por Vendedor — Desglose Local y Gravado</h5>
+                    @if($showReport && $dateFrom)
+                        <span class="badge badge-light f-12">
+                            {{ \Carbon\Carbon::parse($dateFrom)->format('d/m/Y') }}
+                            @if($dateFrom !== $dateTo)
+                                — {{ \Carbon\Carbon::parse($dateTo)->format('d/m/Y') }}
+                            @endif
+                        </span>
+                    @endif
                 </div>
 
                 <div class="card-body">
                     <!-- Mensaje de instrucción -->
                     <div class="alert alert-info text-center {{ !$showReport ? '' : 'd-none' }}">
-                        Selecciona los filtros en la barra lateral y haz clic en "Generar Reporte" para visualizar las ventas.
+                        <i class="fa fa-info-circle me-2"></i>
+                        Selecciona los filtros en la barra lateral y haz clic en <strong>Generar Reporte</strong>.<br>
+                        Usa el botón <strong>Hoy</strong> para ver rápidamente el reporte del día.
                     </div>
 
                     <!-- Panel de Resultados -->
                     <div class="{{ !$showReport ? 'd-none' : '' }}">
-                        
+
                         <!-- KPIs de Resumen -->
                         <h5 class="txt-primary mb-3"><i class="fa fa-info-circle"></i> Totales Consolidados</h5>
                         <div class="row">
@@ -139,17 +168,17 @@
                                     @endforelse
                                 </tbody>
                                 @if($reportData->isNotEmpty())
-                                    <tfoot style="background-color: #f1f2f3; font-weight: bold;">
+                                    <tfoot style="background-color: #2c2f4a; font-weight: bold;">
                                         <tr>
-                                            <td>TOTALES</td>
-                                            <td class="text-right">Bs. {{ number_format($totals['local_bs'], 2) }}</td>
+                                            <td class="text-white">TOTALES</td>
+                                            <td class="text-right text-white">Bs. {{ number_format($totals['local_bs'], 2) }}</td>
                                             <td class="text-right text-info">USD ${{ number_format($totals['local_usd'], 2) }}</td>
-                                            <td class="text-right">Bs. {{ number_format($totals['gravado_bs'], 2) }}</td>
+                                            <td class="text-right text-white">Bs. {{ number_format($totals['gravado_bs'], 2) }}</td>
                                             <td class="text-right text-warning">USD ${{ number_format($totals['gravado_usd'], 2) }}</td>
-                                            <td class="text-right">Bs. {{ number_format($totals['total_bs'], 2) }}</td>
+                                            <td class="text-right text-white">Bs. {{ number_format($totals['total_bs'], 2) }}</td>
                                             <td class="text-right text-success">USD ${{ number_format($totals['total_usd'], 2) }}</td>
                                         </tr>
-                                    </footer>
+                                    </tfoot>
                                 @endif
                             </table>
                         </div>
@@ -159,4 +188,30 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Visor PDF -->
+    @if ($showPdfModal)
+        <div class="modal fade show" tabindex="-1" role="dialog" style="display: block; background: rgba(0,0,0,0.5); z-index: 1050;">
+            <div class="modal-dialog modal-xl" role="document" style="max-width: 90%; height: 90vh; margin: 30px auto;">
+                <div class="modal-content" style="height: 100%;">
+                    <div class="modal-header bg-dark p-2 text-white d-flex justify-content-between align-items-center">
+                        <h5 class="modal-title text-white mb-0">
+                            <i class="fas fa-file-pdf"></i> Vista Previa — Ventas por Vendedor
+                        </h5>
+                        <div class="d-flex align-items-center gap-2">
+                            <a href="{{ $pdfUrl }}" target="_blank" class="btn btn-sm btn-outline-light me-2">
+                                <i class="fa fa-download"></i> Descargar
+                            </a>
+                            <button type="button" class="close text-white" wire:click.prevent="closePdfPreview" aria-label="Close" style="outline: none;">
+                                <span aria-hidden="true" style="font-size: 24px;">&times;</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="modal-body p-0" style="height: calc(100% - 55px); overflow: hidden;">
+                        <iframe src="{{ $pdfUrl }}" style="width: 100%; height: 100%; border: none;"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>
