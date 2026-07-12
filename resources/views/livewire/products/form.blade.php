@@ -309,6 +309,13 @@
                                             Al vender, deberás seleccionar el item específico.
                                         </small>
                                     </div>
+                                    <div class="form-check form-switch mt-2">
+                                        <input class="form-check-input" type="checkbox" id="variablePriceSwitch" wire:model="form.is_variable_price">
+                                        <label class="form-check-label text-danger font-weight-bold" for="variablePriceSwitch">Precio Variable (Servicios/Diseños)</label>
+                                        <small class="form-text text-muted d-block">
+                                            Activa esta opción para que el punto de venta (POS) te pida ingresar el precio al momento de agregarlo a la venta.
+                                        </small>
+                                    </div>
                                 </div>
                             </form>
                             <div class="mt-3">

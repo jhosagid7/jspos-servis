@@ -23,6 +23,7 @@ class PostProduct extends Form
     public $is_variable_quantity = false;
     public $show_in_sales = true;
     public $is_raw_material = false;
+    public $is_variable_price = false;
     
     // Freight & Pricing Rules
     public $freight_type = 'none'; // none, percentage, fixed
@@ -94,6 +95,7 @@ class PostProduct extends Form
             'is_raw_material' => 'boolean',
             'freight_type' => 'in:none,percentage,fixed',
             'freight_value' => 'numeric|min:0',
+            'is_variable_price' => 'boolean',
             'pricing_tiers' => 'array',
             'pricing_tiers.*.min_qty' => 'required|numeric|min:0',
             'pricing_tiers.*.price' => 'required|numeric|min:0'
@@ -189,6 +191,7 @@ class PostProduct extends Form
             'is_variable_quantity' => $this->is_variable_quantity ? 1 : 0,
             'show_in_sales' => $this->show_in_sales ? 1 : 0,
             'is_raw_material' => $this->is_raw_material ? 1 : 0,
+            'is_variable_price' => $this->is_variable_price ? 1 : 0,
             'freight_type' => $this->freight_type,
             'freight_value' => $this->freight_value,
             'price_group_id' => $this->price_group_id ?: null,
@@ -368,6 +371,7 @@ class PostProduct extends Form
             'is_variable_quantity' => $this->is_variable_quantity ? 1 : 0,
             'show_in_sales' => $this->show_in_sales ? 1 : 0,
             'is_raw_material' => $this->is_raw_material ? 1 : 0,
+            'is_variable_price' => $this->is_variable_price ? 1 : 0,
             'freight_type' => $this->freight_type,
             'freight_value' => $this->freight_value,
             'price_group_id' => $this->price_group_id ?: null,
