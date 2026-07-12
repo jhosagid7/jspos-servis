@@ -125,6 +125,7 @@
                             @endif
                             
                             @module('module_commissions')
+                            @if(auth()->user()->hasRole('Super Admin') || ($config && $config->show_commissions))
                             <div class="custom-control custom-switch" title="{{ ($sellerConfig || $customerConfig) ? '' : 'Seleccione un cliente con conf. comercial para habilitar' }}">
                                 <input type="checkbox" class="custom-control-input" id="customSwitch1" wire:model.live="applyCommissions" {{ ($sellerConfig || $customerConfig) ? '' : 'disabled' }}>
                                 <label class="custom-control-label" for="customSwitch1" style="font-size: 0.8rem;">
@@ -132,8 +133,10 @@
                                     @if(!$sellerConfig && !$customerConfig) <i class="fas fa-lock text-muted" style="font-size: 0.7em;"></i> @endif
                                 </label>
                             </div>
+                            @endif
                         </div>
 
+                        @if(auth()->user()->hasRole('Super Admin') || ($config && $config->show_freight))
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <label class="mb-0"></label>
                             <div class="custom-control custom-switch">
@@ -153,6 +156,7 @@
                                 </label>
                             </div>
                         </div>
+                        @endif
                         @endmodule
                         @else
                         {{-- VISTA PARA VENDEDORES FORÁNEOS (SIN PERMISO DE AJUSTES) --}}
@@ -234,8 +238,12 @@
                                         <li><strong>Com:</strong> {{ $activeComm }}% <i>({{ $commSource }})</i></li>
                                         @if(!auth()->user()->can('system.is_foreign_seller') || auth()->user()->hasRole('Admin') || auth()->user()->hasRole('Super Admin'))
                                             <li><strong>Recargo:</strong> {{ $activeMarkup }}% <i>({{ $markupSource }})</i></li>
-                                            <li><strong>Flete:</strong> {{ $activeFreight }}% <i>({{ $freightSource }})</i></li>
-                                            <li><strong>Dif:</strong> {{ $activeDiff }}% <i>({{ $diffSource }})</i></li>
+                                            @if(auth()->user()->hasRole('Super Admin') || ($config && $config->show_freight))
+                                                <li><strong>Flete:</strong> {{ $activeFreight }}% <i>({{ $freightSource }})</i></li>
+                                            @endif
+                                            @if(auth()->user()->hasRole('Super Admin') || ($config && $config->show_exchange_diff))
+                                                <li><strong>Dif:</strong> {{ $activeDiff }}% <i>({{ $diffSource }})</i></li>
+                                            @endif
                                         @endif
                                         
                                         @if(isset($customer['allow_credit']) && $customer['allow_credit'])
@@ -301,6 +309,7 @@
                         @endmodule
 
                         @module('module_delivery')
+                        @if(auth()->user()->hasRole('Super Admin') || ($config && $config->show_drivers))
                         <div class="input-group mb-2">
                             <div class="input-group-prepend">
                                 <span class="input-group-text"><i class="fas fa-truck"></i></span>
@@ -312,6 +321,7 @@
                                 @endforeach
                             </select>
                         </div>
+                        @endif
                         @endmodule
 
                         <div class="input-group" wire:ignore>
@@ -344,7 +354,7 @@
                                 <td class="text-muted">I.V.A.:</td>
                                 <td class="text-right font-weight-bold">{{ $displayCurrency ? $displayCurrency->symbol : '$' }}{{ formatMoney($this->displayIvaCart) }}</td>
                             </tr>
-                            @if($is_freight_broken_down)
+                            @if($is_freight_broken_down && (auth()->user()->hasRole('Super Admin') || ($config && $config->show_freight)))
                                 @if(!auth()->user()->can('system.is_foreign_seller') || auth()->user()->hasRole('Admin') || auth()->user()->hasRole('Super Admin'))
                                 <tr class="border-bottom">
                                     <td class="text-muted">Flete Total:</td>

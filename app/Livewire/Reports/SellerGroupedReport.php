@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class SellerGroupedReport extends Component
 {
-    public $selectedSellers = [];
+    public $selectedOperators = [];
     public $dateFrom = '';
     public $dateTo = '';
     public $showReport = false;
@@ -20,7 +20,7 @@ class SellerGroupedReport extends Component
 
     public function mount()
     {
-        session(['pos' => 'Reporte Agrupado por Vendedor']);
+        session(['pos' => 'Reporte Cobranza por Operador']);
         $this->dateFrom = Carbon::now()->startOfMonth()->format('Y-m-d');
         $this->dateTo   = Carbon::now()->format('Y-m-d');
     }
@@ -44,54 +44,96 @@ class SellerGroupedReport extends Component
             return collect([]);
         }
 
-        $query = DB::table('sale_details')
-            ->join('sales', 'sale_details.sale_id', '=', 'sales.id')
-            ->leftJoin('products', 'sale_details.product_id', '=', 'products.id')
-            ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
-            ->leftJoin('departments', 'categories.department_id', '=', 'departments.id')
-            ->leftJoin('customers', 'sales.customer_id', '=', 'customers.id')
-            ->leftJoin('users', 'customers.seller_id', '=', 'users.id')
+        // 1. Pagos en POS (sale_payment_details)
+        $posPaymentsQuery = DB::table('sale_payment_details')
+            ->join('sales', 'sale_payment_details.sale_id', '=', 'sales.id')
+            ->leftJoin('users', 'sales.user_id', '=', 'users.id')
             ->where('sales.status', '<>', 'returned')
             ->whereNull('sales.deletion_approved_at');
 
         if ($this->dateFrom) {
-            $query->where('sales.created_at', '>=', $this->dateFrom . ' 00:00:00');
+            $posPaymentsQuery->where('sale_payment_details.created_at', '>=', $this->dateFrom . ' 00:00:00');
         }
         if ($this->dateTo) {
-            $query->where('sales.created_at', '<=', $this->dateTo . ' 23:59:59');
+            $posPaymentsQuery->where('sale_payment_details.created_at', '<=', $this->dateTo . ' 23:59:59');
+        }
+        if (!empty($this->selectedOperators)) {
+            $posPaymentsQuery->whereIn('sales.user_id', $this->selectedOperators);
         }
 
-        if (!empty($this->selectedSellers)) {
-            $query->whereIn('customers.seller_id', $this->selectedSellers);
+        $posPayments = $posPaymentsQuery->select([
+            'sales.user_id',
+            DB::raw("COALESCE(users.name, 'SISTEMA / ONLINE') as seller_name"),
+            'sale_payment_details.payment_method as method',
+            'sale_payment_details.currency_code as currency',
+            DB::raw("SUM(sale_payment_details.amount) as total_amount"),
+            DB::raw("AVG(sale_payment_details.exchange_rate) as avg_rate"),
+            DB::raw("SUM(sale_payment_details.amount_in_primary_currency) as total_usd")
+        ])->groupBy('sales.user_id', 'users.name', 'sale_payment_details.payment_method', 'sale_payment_details.currency_code')->get();
+
+        // 2. Abonos (payments)
+        $abonosQuery = DB::table('payments')
+            ->join('sales', 'payments.sale_id', '=', 'sales.id')
+            ->leftJoin('users', 'payments.user_id', '=', 'users.id')
+            ->where('sales.status', '<>', 'returned')
+            ->whereNull('sales.deletion_approved_at')
+            ->where('payments.status', 'approved');
+
+        if ($this->dateFrom) {
+            $abonosQuery->where('payments.payment_date', '>=', $this->dateFrom . ' 00:00:00');
+        }
+        if ($this->dateTo) {
+            $abonosQuery->where('payments.payment_date', '<=', $this->dateTo . ' 23:59:59');
+        }
+        if (!empty($this->selectedOperators)) {
+            $abonosQuery->whereIn('payments.user_id', $this->selectedOperators);
         }
 
-        return $query->select([
-                'customers.seller_id',
-                DB::raw("COALESCE(users.name, 'OFICINA / SIN VENDEDOR') as seller_name"),
-                DB::raw("SUM(CASE WHEN departments.report_type = 'local' THEN sale_details.quantity * sale_details.sale_price ELSE 0 END) as local_usd"),
-                DB::raw("SUM(CASE WHEN departments.report_type = 'gravado' THEN sale_details.quantity * sale_details.sale_price ELSE 0 END) as gravado_usd"),
-                DB::raw("SUM(sale_details.quantity * sale_details.sale_price) as total_usd"),
-                DB::raw("COUNT(DISTINCT sale_details.sale_id) as sale_count")
-            ])
-            ->groupBy(['customers.seller_id', 'users.name'])
-            ->orderBy('users.name')
-            ->get();
+        $abonos = $abonosQuery->select([
+            'payments.user_id',
+            DB::raw("COALESCE(users.name, 'SISTEMA / ONLINE') as seller_name"),
+            'payments.pay_way as method',
+            'payments.currency as currency',
+            DB::raw("SUM(payments.amount) as total_amount"),
+            DB::raw("AVG(payments.exchange_rate) as avg_rate"),
+            DB::raw("SUM(payments.amount / CASE WHEN payments.exchange_rate > 0 THEN payments.exchange_rate ELSE 1 END) as total_usd")
+        ])->groupBy('payments.user_id', 'users.name', 'payments.pay_way', 'payments.currency')->get();
+
+        $all = $posPayments->concat($abonos);
+
+        // Agrupar por vendedor
+        return $all->groupBy('seller_name')->map(function($sellerPayments) {
+            return $sellerPayments->groupBy(function($item) {
+                return $item->method . '-' . $item->currency;
+            })->map(function($methodGroup) {
+                $first = $methodGroup->first();
+                return (object)[
+                    'method' => $first->method,
+                    'currency' => $first->currency,
+                    'total_amount' => $methodGroup->sum('total_amount'),
+                    'avg_rate' => $methodGroup->avg('avg_rate'),
+                    'total_usd' => $methodGroup->sum('total_usd'),
+                ];
+            })->values();
+        });
     }
 
     public function generatePdf()
     {
         $reportData = $this->getReportData();
-        $totals = [
-            'local_usd'   => $reportData->sum('local_usd'),
-            'gravado_usd' => $reportData->sum('gravado_usd'),
-            'total_usd'   => $reportData->sum('total_usd'),
-        ];
+        
+        $totalGeneralUsd = 0;
+        foreach ($reportData as $sellerName => $payments) {
+            foreach ($payments as $p) {
+                $totalGeneralUsd += $p->total_usd;
+            }
+        }
 
         $config = \App\Models\Configuration::first();
 
         $pdf = Pdf::loadView('reports.seller-grouped-report-pdf', [
             'reportData'  => $reportData,
-            'totals'      => $totals,
+            'totalGeneralUsd' => $totalGeneralUsd,
             'config'      => $config,
             'dateFrom'    => $this->dateFrom,
             'dateTo'      => $this->dateTo,
@@ -112,7 +154,7 @@ class SellerGroupedReport extends Component
         $params = [
             'dateFrom'        => $this->dateFrom,
             'dateTo'          => $this->dateTo,
-            'selectedSellers' => implode(',', $this->selectedSellers),
+            'selectedOperators' => implode(',', $this->selectedOperators),
         ];
 
         $this->pdfUrl = route('reports.seller.grouped.pdf', $params);
@@ -127,19 +169,36 @@ class SellerGroupedReport extends Component
 
     public function render()
     {
-        $sellersList = User::sellers()->orderBy('name')->get();
+        $operatorsList = User::orderBy('name')->get();
         $reportData  = $this->getReportData();
 
-        $totals = [
-            'local_usd'   => $reportData->sum('local_usd'),
-            'gravado_usd' => $reportData->sum('gravado_usd'),
-            'total_usd'   => $reportData->sum('total_usd'),
-        ];
+        $totalGeneralUsd = 0;
+        // Also calculate totals by method/currency for the top cards
+        $totalsByMethod = [];
+        
+        foreach ($reportData as $sellerName => $payments) {
+            foreach ($payments as $p) {
+                $totalGeneralUsd += $p->total_usd;
+                
+                $key = $p->method . '-' . $p->currency;
+                if (!isset($totalsByMethod[$key])) {
+                    $totalsByMethod[$key] = [
+                        'method' => $p->method,
+                        'currency' => $p->currency,
+                        'total_amount' => 0,
+                        'total_usd' => 0
+                    ];
+                }
+                $totalsByMethod[$key]['total_amount'] += $p->total_amount;
+                $totalsByMethod[$key]['total_usd'] += $p->total_usd;
+            }
+        }
 
         return view('livewire.reports.seller-grouped-report', [
-            'sellersList' => $sellersList,
+            'operatorsList' => $operatorsList,
             'reportData'  => $reportData,
-            'totals'      => $totals,
+            'totalGeneralUsd' => $totalGeneralUsd,
+            'totalsByMethod' => $totalsByMethod
         ]);
     }
 }

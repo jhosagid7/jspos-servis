@@ -1,4 +1,5 @@
 <div>
+@php $sysconfig = \App\Models\Configuration::first(); @endphp
     <div class="row">
         <div class="col-sm-12 col-md-3 ">
             <div class="card mb-3">
@@ -118,7 +119,9 @@
                                 <option value="none">Sin Agrupar</option>
                                 <option value="date">Por Fecha</option>
                                 <option value="seller_id">Por Vendedor</option>
-                                <option value="driver_id">Por Chofer / Ruta</option>
+                                @if(auth()->user()->hasRole('Super Admin') || ($sysconfig && $sysconfig->show_drivers))
+                                    <option value="driver_id">Por Chofer / Ruta</option>
+                                @endif
                                 <option value="customer_id">Por Cliente</option>
                                 <option value="user_id">Por Operador</option>
                             </select>
@@ -165,30 +168,36 @@
                                 <label class="custom-control-label f-12" for="col_porcentaje">% Aplicado</label>
                             </div>
                         </div>
+                        @if(auth()->user()->hasRole('Super Admin') || ($sysconfig && $sysconfig->show_commissions))
                         <div class="col-12 mb-1">
                             <div class="custom-control custom-checkbox ml-2">
                                 <input type="checkbox" class="custom-control-input" id="col_comision" wire:model.live="columns.comision">
                                 <label class="custom-control-label f-12" for="col_comision">Comisión</label>
                             </div>
                         </div>
+                        @endif
+                        @if(auth()->user()->hasRole('Super Admin') || ($sysconfig && $sysconfig->show_freight))
                         <div class="col-12 mb-1">
                             <div class="custom-control custom-checkbox ml-2">
                                 <input type="checkbox" class="custom-control-input" id="col_flete" wire:model.live="columns.flete">
                                 <label class="custom-control-label f-12" for="col_flete">Flete</label>
                             </div>
                         </div>
+                        @endif
                         <div class="col-12 mb-1">
                             <div class="custom-control custom-checkbox ml-2">
                                 <input type="checkbox" class="custom-control-input" id="col_recargo" wire:model.live="columns.recargo">
                                 <label class="custom-control-label f-12" for="col_recargo">Recargo</label>
                             </div>
                         </div>
+                        @if(auth()->user()->hasRole('Super Admin') || ($sysconfig && $sysconfig->show_exchange_diff))
                         <div class="col-12 mb-1">
                             <div class="custom-control custom-checkbox ml-2">
                                 <input type="checkbox" class="custom-control-input" id="col_diferencial" wire:model.live="columns.diferencial">
                                 <label class="custom-control-label f-12" for="col_diferencial">Diferencial</label>
                             </div>
                         </div>
+                        @endif
                         <div class="col-12 mb-1">
                             <div class="custom-control custom-checkbox ml-2">
                                 <input type="checkbox" class="custom-control-input" id="col_total" wire:model.live="columns.total">
@@ -300,10 +309,10 @@
                                     @if($columns['vendedor']) <th>Vendedor</th> @endif
                                     @if($columns['base']) <th>Base</th> @endif
                                     @if($columns['porcentaje']) <th>%</th> @endif
-                                    @if($columns['comision']) <th>Comisión</th> @endif
-                                    @if($columns['flete']) <th>Flete</th> @endif
+                                    @if($columns['comision'] && (auth()->user()->hasRole('Super Admin') || ($sysconfig && $sysconfig->show_commissions))) <th>Comisión</th> @endif
+                                    @if($columns['flete'] && (auth()->user()->hasRole('Super Admin') || ($sysconfig && $sysconfig->show_freight))) <th>Flete</th> @endif
                                     @if($columns['recargo']) <th>Recargo</th> @endif
-                                    @if($columns['diferencial']) <th>Dif.</th> @endif
+                                    @if($columns['diferencial'] && (auth()->user()->hasRole('Super Admin') || ($sysconfig && $sysconfig->show_exchange_diff))) <th>Dif.</th> @endif
                                     @if($columns['total']) <th>Total</th> @endif
                                     @if($columns['credito']) <th>Crédito (USD)</th> @endif
                                     @if($columns['acuerdo']) <th>Acuerdo</th> @endif
@@ -468,7 +477,7 @@
                                         @if($columns['vendedor']) <td>{{ optional(optional($sale->customer)->seller)->name ?? 'N/A' }}</td> @endif
                                         @if($columns['base']) <td class="text-right">${{ number_format($base, 2) }}</td> @endif
                                         @if($columns['porcentaje']) <td>{{ number_format($surchargePercent, 1) }}%</td> @endif
-                                        @if($columns['comision'])
+                                        @if($columns['comision'] && (auth()->user()->hasRole('Super Admin') || ($sysconfig && $sysconfig->show_commissions)))
                                         <td class="text-right text-success">
                                             ${{ number_format($commAmt, 2) }}
                                             @if($commPercent > 0)
@@ -476,7 +485,7 @@
                                             @endif
                                         </td>
                                         @endif
-                                        @if($columns['flete'])
+                                        @if($columns['flete'] && (auth()->user()->hasRole('Super Admin') || ($sysconfig && $sysconfig->show_freight)))
                                         <td class="text-right text-info">
                                             ${{ number_format($freightAmt, 2) }}
                                             @if($freightPercent > 0)
@@ -492,7 +501,7 @@
                                             @endif
                                         </td>
                                         @endif
-                                        @if($columns['diferencial'])
+                                        @if($columns['diferencial'] && (auth()->user()->hasRole('Super Admin') || ($sysconfig && $sysconfig->show_exchange_diff)))
                                         <td class="text-right text-warning">
                                             ${{ number_format($diffAmt, 2) }}
                                             @if($diffPercent > 0)

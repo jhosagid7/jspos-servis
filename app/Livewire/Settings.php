@@ -18,6 +18,7 @@ class Settings extends Component
     public $sequentialCutOffDate;
     public $catalogueShowPrices, $catalogueShowBasePrices;
     public $discountRules = [];
+    public $showCommissions, $showFreight, $showExchangeDiff, $showDrivers, $showFactories;
 
     public $logo, $logo_preview; // Logo properties
     public $backupEmails; // Backup Emails
@@ -161,6 +162,12 @@ class Settings extends Component
             $this->binanceRate = $config->binance_rate;
             $this->binanceMarkupPoints = $config->binance_markup_points ?? 0;
 
+            // UI Toggles
+            $this->showCommissions = (bool) $config->show_commissions;
+            $this->showFreight = (bool) $config->show_freight;
+            $this->showExchangeDiff = (bool) $config->show_exchange_diff;
+            $this->showDrivers = (bool) $config->show_drivers;
+            $this->showFactories = (bool) $config->show_factories;
             
             // Load Discount Rules
             $this->loadDiscountRules();
@@ -317,6 +324,11 @@ class Settings extends Component
                 'catalogue_show_prices' => $this->catalogueShowPrices ? 1 : 0,
                 'catalogue_show_base_prices' => $this->catalogueShowBasePrices ? 1 : 0,
                 'sequential_cut_off_date' => $this->sequentialCutOffDate ? \Carbon\Carbon::parse($this->sequentialCutOffDate)->format('Y-m-d H:i:s') : null,
+                'show_commissions' => $this->showCommissions ? 1 : 0,
+                'show_freight' => $this->showFreight ? 1 : 0,
+                'show_exchange_diff' => $this->showExchangeDiff ? 1 : 0,
+                'show_drivers' => $this->showDrivers ? 1 : 0,
+                'show_factories' => $this->showFactories ? 1 : 0,
             ];
 
             // Handle Logo Upload

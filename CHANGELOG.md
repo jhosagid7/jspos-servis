@@ -1,3 +1,15 @@
+## [1.10.232] - 2026-07-12
+### Added
+- **Productos de Precio Variable**:
+  * Ahora el POS solicita una descripción personalizada ("Observación") además del precio manual para cada ítem, lo cual permite agregar trabajos personalizados con nombre (ej. "Diseño de Logo") y que se vea reflejado en el carrito y la factura.
+  * Permite añadir múltiples veces al carrito el mismo producto variable tratándolo como ítems diferentes, en lugar de sumar la cantidad a la misma fila.
+- **Reporte Agrupado por Vendedor**:
+  * Se añadieron columnas desglosadas por cada método de pago (Bolívares, USD, COP, Zelle, Transferencias, etc.) tanto en las secciones "Local" como "Gravado".
+  * Se incluyó la tasa de cambio al momento de cobrar, el total en la moneda original (ej. total en Bs) y la conversión en USD de cada venta.
+- **Configuraciones y Limpieza de Interfaz**:
+  * Nuevo panel de control "Visibilidad de Módulos" en la configuración general para apagar y ocultar visualmente características no usadas del sistema (Comisiones, Fletes, Diferencial, Choferes, Fábricas).
+  * Inmunidad para el rol `Super Admin`: Los administradores principales pueden ver todos los módulos ocultos y acceder de forma exclusiva a secciones sensibles ("Mensajería", "Ajustes Globales", "Roles y Permisos", "Asignación").
+
 ## [1.10.231] - 2026-07-12
 ### Added
 - **Reporte Agrupado por Vendedor**:

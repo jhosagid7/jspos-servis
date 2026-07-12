@@ -13,6 +13,11 @@ class Configuration extends Model
 
     protected $fillable = [
         'business_name',
+        'show_commissions',
+        'show_freight',
+        'show_exchange_diff',
+        'show_drivers',
+        'show_factories',
         'address',
         'city',
         'phone',

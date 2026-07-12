@@ -1,4 +1,6 @@
 @php
+    $sysconfig = \App\Models\Configuration::first();
+    $isSuperAdmin = auth()->check() && auth()->user()->hasRole('Super Admin');
     $theme = auth()->user()->theme ?? [];
     
     // Aside Classes
@@ -131,6 +133,7 @@
                         </li>
                         @endcan
 
+                        @if($isSuperAdmin || ($sysconfig && $sysconfig->show_commissions))
                         @module('module_commissions')
                         @can('reports.commissions')
                         <li class="nav-item">
@@ -141,11 +144,13 @@
                         </li>
                         @endcan
                         @endmodule
+                        @endif
                     </ul>
                 </li>
                 @endunlessrole
 
                 {{-- MÓDULO 2: LOGÍSTICA Y DESPACHO --}}
+                @if($isSuperAdmin || ($sysconfig && $sysconfig->show_drivers))
                 @if($isDriver || $canSeeLogistics)
                 <li class="nav-item">
                     <a href="#" class="nav-link">
@@ -182,6 +187,7 @@
                         @endmodule
                     </ul>
                 </li>
+                @endif
                 @endif
 
                 {{-- MÓDULO 3: INVENTARIO Y PRODUCCIÓN --}}
@@ -289,6 +295,8 @@
                 </li>
                 @endunlessrole
 
+
+                @if($isSuperAdmin || ($sysconfig && $sysconfig->show_factories))
                 {{-- MÓDULO: FÁBRICA SOPLADOS (BOTELLONES) --}}
                 @unlessrole('Driver')
                 <li class="nav-item {{ Request::is('production-report*') || Request::is('soplados/*') ? 'menu-open' : '' }}">
@@ -327,7 +335,9 @@
                     </ul>
                 </li>
                 @endunlessrole
+                @endif
 
+                @if($isSuperAdmin || ($sysconfig && $sysconfig->show_factories))
                 {{-- MÓDULO: FÁBRICA BOLSAS --}}
                 @unlessrole('Driver')
                 @module('module_production')
@@ -352,6 +362,7 @@
                 @endcan
                 @endmodule
                 @endunlessrole
+                @endif
 
                 {{-- MÓDULO 4: FINANZAS Y AUDITORÍA --}}
                 @unlessrole('Driver')
@@ -739,6 +750,7 @@
                                     </a>
                                 </li>
                                 @endcan
+                                @if($isSuperAdmin)
                                 @module('module_roles')
                                 @can('roles.index')
                                 <li class="nav-item">
@@ -757,6 +769,7 @@
                                 </li>
                                 @endcan
                                 @endmodule
+                                @endif
                             </ul>
                         </li>
                         @endcanany
@@ -784,6 +797,7 @@
                             </a>
                         </li>
 
+                        @role('Super Admin')
                         <li class="nav-item {{ Request::is('settings/whatsapp*') || Request::is('settings/email*') ? 'menu-open' : '' }}">
                             <a href="#" class="nav-link {{ Request::is('settings/whatsapp*') || Request::is('settings/email*') ? 'active' : '' }}">
                                 <i class="far fa-circle nav-icon"></i>
@@ -872,6 +886,7 @@
                             </ul>
                         </li>
                         @endcan
+                        @endrole
                     </ul>
                 </li>
                 @endunlessrole

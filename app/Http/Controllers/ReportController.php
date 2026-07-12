@@ -3801,50 +3801,85 @@ class ReportController extends Controller
     {
         $dateFrom        = $request->get('dateFrom', Carbon::today()->format('Y-m-d'));
         $dateTo          = $request->get('dateTo',   Carbon::today()->format('Y-m-d'));
-        $selectedSellers = $request->get('selectedSellers')
-            ? array_filter(explode(',', $request->get('selectedSellers')))
+        $selectedOperators = $request->get('selectedOperators')
+            ? array_filter(explode(',', $request->get('selectedOperators')))
             : [];
 
-        $query = DB::table('sale_details')
-            ->join('sales', 'sale_details.sale_id', '=', 'sales.id')
-            ->leftJoin('products', 'sale_details.product_id', '=', 'products.id')
-            ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
-            ->leftJoin('departments', 'categories.department_id', '=', 'departments.id')
-            ->leftJoin('customers', 'sales.customer_id', '=', 'customers.id')
-            ->leftJoin('users', 'customers.seller_id', '=', 'users.id')
+        $posPaymentsQuery = DB::table('sale_payment_details')
+            ->join('sales', 'sale_payment_details.sale_id', '=', 'sales.id')
+            ->leftJoin('users', 'sales.user_id', '=', 'users.id')
             ->where('sales.status', '<>', 'returned')
             ->whereNull('sales.deletion_approved_at')
-            ->where('sales.created_at', '>=', $dateFrom . ' 00:00:00')
-            ->where('sales.created_at', '<=', $dateTo   . ' 23:59:59');
+            ->where('sale_payment_details.created_at', '>=', $dateFrom . ' 00:00:00')
+            ->where('sale_payment_details.created_at', '<=', $dateTo . ' 23:59:59');
 
-        if (!empty($selectedSellers)) {
-            $query->whereIn('customers.seller_id', $selectedSellers);
+        if (!empty($selectedOperators)) {
+            $posPaymentsQuery->whereIn('sales.user_id', $selectedOperators);
         }
 
-        $reportData = $query->select([
-                'customers.seller_id',
-                DB::raw("COALESCE(users.name, 'OFICINA / SIN VENDEDOR') as seller_name"),
-                DB::raw("SUM(CASE WHEN departments.report_type = 'local' THEN sale_details.quantity * sale_details.sale_price ELSE 0 END) as local_usd"),
-                DB::raw("SUM(CASE WHEN departments.report_type = 'gravado' THEN sale_details.quantity * sale_details.sale_price ELSE 0 END) as gravado_usd"),
-                DB::raw("SUM(sale_details.quantity * sale_details.sale_price) as total_usd"),
-                DB::raw("COUNT(DISTINCT sale_details.sale_id) as sale_count"),
-            ])
-            ->groupBy(['customers.seller_id', 'users.name'])
-            ->orderBy('users.name')
-            ->get();
+        $posPayments = $posPaymentsQuery->select([
+            'sales.user_id',
+            DB::raw("COALESCE(users.name, 'SISTEMA / ONLINE') as seller_name"),
+            'sale_payment_details.payment_method as method',
+            'sale_payment_details.currency_code as currency',
+            DB::raw("SUM(sale_payment_details.amount) as total_amount"),
+            DB::raw("AVG(sale_payment_details.exchange_rate) as avg_rate"),
+            DB::raw("SUM(sale_payment_details.amount_in_primary_currency) as total_usd")
+        ])->groupBy('sales.user_id', 'users.name', 'sale_payment_details.payment_method', 'sale_payment_details.currency_code')->get();
 
-        $totals = [
-            'local_usd'   => $reportData->sum('local_usd'),
-            'gravado_usd' => $reportData->sum('gravado_usd'),
-            'total_usd'   => $reportData->sum('total_usd'),
-        ];
+        $abonosQuery = DB::table('payments')
+            ->join('sales', 'payments.sale_id', '=', 'sales.id')
+            ->leftJoin('users', 'payments.user_id', '=', 'users.id')
+            ->where('sales.status', '<>', 'returned')
+            ->whereNull('sales.deletion_approved_at')
+            ->where('payments.status', 'approved')
+            ->where('payments.payment_date', '>=', $dateFrom . ' 00:00:00')
+            ->where('payments.payment_date', '<=', $dateTo . ' 23:59:59');
+
+        if (!empty($selectedOperators)) {
+            $abonosQuery->whereIn('payments.user_id', $selectedOperators);
+        }
+
+        $abonos = $abonosQuery->select([
+            'payments.user_id',
+            DB::raw("COALESCE(users.name, 'SISTEMA / ONLINE') as seller_name"),
+            'payments.pay_way as method',
+            'payments.currency as currency',
+            DB::raw("SUM(payments.amount) as total_amount"),
+            DB::raw("AVG(payments.exchange_rate) as avg_rate"),
+            DB::raw("SUM(payments.amount / CASE WHEN payments.exchange_rate > 0 THEN payments.exchange_rate ELSE 1 END) as total_usd")
+        ])->groupBy('payments.user_id', 'users.name', 'payments.pay_way', 'payments.currency')->get();
+
+        $all = $posPayments->concat($abonos);
+
+        $reportData = $all->groupBy('seller_name')->map(function($sellerPayments) {
+            return $sellerPayments->groupBy(function($item) {
+                return $item->method . '-' . $item->currency;
+            })->map(function($methodGroup) {
+                $first = $methodGroup->first();
+                return (object)[
+                    'method' => $first->method,
+                    'currency' => $first->currency,
+                    'total_amount' => $methodGroup->sum('total_amount'),
+                    'avg_rate' => $methodGroup->avg('avg_rate'),
+                    'total_usd' => $methodGroup->sum('total_usd'),
+                ];
+            })->values();
+        });
+
+        $totalGeneralUsd = 0;
+        foreach ($reportData as $sellerName => $payments) {
+            foreach ($payments as $p) {
+                $totalGeneralUsd += $p->total_usd;
+            }
+        }
 
         $config = Configuration::first();
 
         $pdf = Pdf::loadView('reports.seller-grouped-report-pdf', [
-            'reportData'  => $reportData,
-            'totals'      => $totals,
-            'config'      => $config,
+            'reportData'      => $reportData,
+            'totalGeneralUsd' => $totalGeneralUsd,
+            'config'          => $config,
             'dateFrom'    => $dateFrom,
             'dateTo'      => $dateTo,
             'generatedAt' => Carbon::now()->format('d/m/Y H:i'),

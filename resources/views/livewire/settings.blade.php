@@ -297,6 +297,42 @@
                                         @error('address') <span class="text-danger">{{ $message }}</span> @enderror
                                     </div>
 
+                                    <div class="col-sm-12">
+                                        <hr>
+                                        <h6 class="mb-3">Visibilidad de Módulos (Mostrar / Ocultar)</h6>
+                                    </div>
+                                    <div class="col-sm-4 col-md-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="showCommissions" wire:model="showCommissions">
+                                            <label class="form-check-label" for="showCommissions">Comisiones</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-4 col-md-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="showFreight" wire:model="showFreight">
+                                            <label class="form-check-label" for="showFreight">Fletes</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-4 col-md-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="showExchangeDiff" wire:model="showExchangeDiff">
+                                            <label class="form-check-label" for="showExchangeDiff">Diferencial Cambiario</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-4 col-md-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="showDrivers" wire:model="showDrivers">
+                                            <label class="form-check-label" for="showDrivers">Choferes</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-4 col-md-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="showFactories" wire:model="showFactories">
+                                            <label class="form-check-label" for="showFactories">Módulo de Fábricas</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-12"><hr></div>
+
                                     <div class="col-12">
                                         <button class="btn btn-primary" wire:click.prevent="saveConfig" wire:loading.attr="disabled">
                                             <span wire:loading.remove wire:target="saveConfig">Guardar Configuración</span>
