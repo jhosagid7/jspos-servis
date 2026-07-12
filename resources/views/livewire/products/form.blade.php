@@ -421,16 +421,22 @@
                                                     <div class="col-12">
                                                         <div class="input-group">
                                                             <span class="input-group-text"><i class="fa fa-truck"></i></span>
-                                                            <select wire:model="form.supplier_id" class="form-control form-select"
-                                                                id="supplier">
-                                                                <option value="0" disabled> Seleccionar</option>
-                                                                @foreach ($suppliers as $supplier)
-                                                                    <option value="{{ $supplier->id }}"
-                                                                        {{ $supplier->id == $form->supplier_id ? 'selected' : '' }}>
-                                                                        {{ $supplier->name }}
-                                                                    </option>
-                                                                @endforeach
-                                                            </select>
+                                                            @if($form->type === 'service')
+                                                                <select class="form-control form-select" disabled>
+                                                                    <option value="0" selected>No requerido para Servicios</option>
+                                                                </select>
+                                                            @else
+                                                                <select wire:model="form.supplier_id" class="form-control form-select"
+                                                                    id="supplier">
+                                                                    <option value="0" disabled> Seleccionar</option>
+                                                                    @foreach ($suppliers as $supplier)
+                                                                        <option value="{{ $supplier->id }}"
+                                                                            {{ $supplier->id == $form->supplier_id ? 'selected' : '' }}>
+                                                                            {{ $supplier->name }}
+                                                                        </option>
+                                                                    @endforeach
+                                                                </select>
+                                                            @endif
                                                         </div>
                                                         @error('form.supplier_id')
                                                             <span class="text-danger">{{ $message }}</span>

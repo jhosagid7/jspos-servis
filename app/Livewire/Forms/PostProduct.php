@@ -80,7 +80,7 @@ class PostProduct extends Form
                 "required",
                 Rule::notIn([0])
             ],
-            'supplier_id' => [
+            'supplier_id' => $this->type === 'service' ? 'nullable' : [
                 "required",
                 Rule::notIn([0])
             ],
@@ -150,6 +150,9 @@ class PostProduct extends Form
         if ($this->type === 'service') {
             $this->manage_stock = 0;
             $this->stock_qty = 0;
+            if (empty($this->supplier_id) || $this->supplier_id == 0) {
+                $this->supplier_id = \App\Models\Supplier::first()->id ?? 1;
+            }
         }
         $this->cleanUnauthorizedFeatures();
         $this->validate();
@@ -328,6 +331,9 @@ class PostProduct extends Form
         if ($this->type === 'service') {
             $this->manage_stock = 0;
             $this->stock_qty = 0;
+            if (empty($this->supplier_id) || $this->supplier_id == 0) {
+                $this->supplier_id = \App\Models\Supplier::first()->id ?? 1;
+            }
         }
         $this->cleanUnauthorizedFeatures();
         $this->validate();
