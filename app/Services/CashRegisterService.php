@@ -38,7 +38,12 @@ class CashRegisterService
      */
     public function hasOpenRegister($userId = null)
     {
-        return $this->getActiveCashRegister($userId) !== null;
+        $userId = $userId ?? Auth::id();
+        if (!$userId) return false;
+        
+        return CashRegister::where('user_id', $userId)
+            ->where('status', 'open')
+            ->exists();
     }
 
     /**
